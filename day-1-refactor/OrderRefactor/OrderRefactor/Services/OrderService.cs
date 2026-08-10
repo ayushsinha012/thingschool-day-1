@@ -1,6 +1,7 @@
 using OrderRefactor.DTOs;
 using OrderRefactor.Models;
 using OrderRefactor.Repositories;
+using OrderRefactor.Strategies;
 
 namespace OrderRefactor.Services;
 
@@ -11,13 +12,16 @@ public class OrderService : IOrderService
     private const decimal HighValueCustomerLimit = 50000m;
 
     private readonly IOrderRepository _repository;
+    private readonly OrderPricingStrategyProcessor _pricingProcessor;
     private readonly ILogger<OrderService> _logger;
 
     public OrderService(
         IOrderRepository repository,
+        OrderPricingStrategyProcessor pricingProcessor,
         ILogger<OrderService> logger)
     {
         _repository = repository;
+        _pricingProcessor = pricingProcessor;
         _logger = logger;
     }
 
@@ -48,7 +52,8 @@ public class OrderService : IOrderService
                 request.CustomerId,
                 cancellationToken);
 
-        if (previousOrders.Sum(order => order.TotalAmount) > HighValueCustomerLimit)
+        if (previousOrders.Sum(order => order.TotalAmount) >
+            HighValueCustomerLimit)
         {
             total *= 0.98m;
         }
@@ -97,6 +102,10 @@ public class OrderService : IOrderService
             order.Items.Add(orderItem);
         }
 
+        total = _pricingProcessor.ApplyStrategies(total, order);
+
+        order.TotalAmount = total;
+
         var savedOrder = await _repository.AddOrderAsync(
             order,
             cancellationToken);
@@ -113,10 +122,12 @@ public class OrderService : IOrderService
     {
         if (request.CustomerId <= 0)
         {
-            throw new ArgumentException("Customer ID must be greater than zero.");
+            throw new ArgumentException(
+                "Customer ID must be greater than zero.");
         }
 
-        if (request.Items is null || request.Items.Count == 0)
+        if (request.Items is null ||
+            request.Items.Count == 0)
         {
             throw new ArgumentException(
                 "At least one order item is required.");
@@ -194,13 +205,15 @@ public class OrderService : IOrderService
             CustomerName = order.CustomerName,
             Total = order.TotalAmount,
             Status = order.Status,
-            Items = order.Items.Select(item => new OrderItemResponse
-            {
-                ProductName = item.ProductName,
-                Quantity = item.Quantity,
-                Price = item.Price,
-                Total = item.Total
-            }).ToList()
+
+            Items = order.Items.Select(item =>
+                new OrderItemResponse
+                {
+                    ProductName = item.ProductName,
+                    Quantity = item.Quantity,
+                    Price = item.Price,
+                    Total = item.Total
+                }).ToList()
         };
     }
 }
