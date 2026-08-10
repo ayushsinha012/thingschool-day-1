@@ -1,0 +1,14 @@
+/home/ayush/Desktop/thingschool/day-1/hello-cs/bin/Debug/net10.0/hello-cs
+/home/ayush/Desktop/thingschool/day-1/hello-cs/bin/Debug/net10.0/hello-cs.deps.json
+/home/ayush/Desktop/thingschool/day-1/hello-cs/bin/Debug/net10.0/hello-cs.runtimeconfig.json
+/home/ayush/Desktop/thingschool/day-1/hello-cs/bin/Debug/net10.0/hello-cs.dll
+/home/ayush/Desktop/thingschool/day-1/hello-cs/bin/Debug/net10.0/hello-cs.pdb
+/home/ayush/Desktop/thingschool/day-1/hello-cs/obj/Debug/net10.0/hello-cs.GeneratedMSBuildEditorConfig.editorconfig
+/home/ayush/Desktop/thingschool/day-1/hello-cs/obj/Debug/net10.0/hello-cs.AssemblyInfoInputs.cache
+/home/ayush/Desktop/thingschool/day-1/hello-cs/obj/Debug/net10.0/hello-cs.AssemblyInfo.cs
+/home/ayush/Desktop/thingschool/day-1/hello-cs/obj/Debug/net10.0/hello-cs.csproj.CoreCompileInputs.cache
+/home/ayush/Desktop/thingschool/day-1/hello-cs/obj/Debug/net10.0/hello-cs.dll
+/home/ayush/Desktop/thingschool/day-1/hello-cs/obj/Debug/net10.0/refint/hello-cs.dll
+/home/ayush/Desktop/thingschool/day-1/hello-cs/obj/Debug/net10.0/hello-cs.pdb
+/home/ayush/Desktop/thingschool/day-1/hello-cs/obj/Debug/net10.0/hello-cs.genruntimeconfig.cache
+/home/ayush/Desktop/thingschool/day-1/hello-cs/obj/Debug/net10.0/ref/hello-cs.dll
