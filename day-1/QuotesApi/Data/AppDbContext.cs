@@ -15,14 +15,12 @@ public class AppDbContext : DbContext
 
     public DbSet<Collection> Collections => Set<Collection>();
 
+    public DbSet<User> Users => Set<User>();
+
     protected override void OnModelCreating(
         ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
-        // ==========================================
-        // Quote
-        // ==========================================
 
         modelBuilder.Entity<Quote>(entity =>
         {
@@ -35,9 +33,6 @@ public class AppDbContext : DbContext
                 .IsRequired();
         });
 
-        // ==========================================
-        // Collection
-        // ==========================================
 
         modelBuilder.Entity<Collection>(entity =>
         {
@@ -50,8 +45,6 @@ public class AppDbContext : DbContext
             entity.Property(collection => collection.OwnerId)
                 .IsRequired();
 
-            // Collection owns CollectionItem.
-            // CollectionItem cannot exist independently.
             entity.OwnsMany(
                 collection => collection.Items,
                 item =>
@@ -59,7 +52,6 @@ public class AppDbContext : DbContext
                     item.WithOwner()
                         .HasForeignKey("CollectionId");
 
-                    // Shadow key used by EF Core.
                     item.Property<int>("Id");
 
                     item.HasKey("Id");
@@ -71,12 +63,24 @@ public class AppDbContext : DbContext
                         .IsRequired();
                 });
 
-            // Tell EF to use the private _items
-            // backing field instead of trying to modify
-            // the read-only Items property.
             entity.Navigation(collection => collection.Items)
                 .UsePropertyAccessMode(
                     PropertyAccessMode.Field);
+        });
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasKey(user => user.Id);
+
+            entity.Property(user => user.Email)
+                .IsRequired()
+                .HasMaxLength(255);
+
+            entity.Property(user => user.PasswordHash)
+                .IsRequired();
+
+            entity.HasIndex(user => user.Email)
+                .IsUnique();
         });
     }
 }
