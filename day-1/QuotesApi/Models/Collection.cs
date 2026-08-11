@@ -6,11 +6,7 @@ namespace QuotesApi.Models;
 
 public class Collection
 {
-    // Private backing field.
-    // Only the aggregate itself can change the collection items.
     private readonly List<CollectionItem> _items = new();
-
-    // EF Core needs a private constructor.
     private Collection()
     {
     }
@@ -35,16 +31,9 @@ public class Collection
     public string Name { get; private set; } = string.Empty;
 
     public int OwnerId { get; private set; }
-
-    // Read-only to callers.
-    // Mutations must go through AddItem/RemoveItem.
     public IReadOnlyCollection<CollectionItem> Items =>
         _items.AsReadOnly();
 
-    /// <summary>
-    /// Adds a quote to this collection.
-    /// All collection invariants are checked here.
-    /// </summary>
     public void AddItem(
         int quoteId,
         DateTimeOffset addedAt)
@@ -56,14 +45,12 @@ public class Collection
                 nameof(quoteId));
         }
 
-        // Maximum 50 items.
         if (_items.Count >= 50)
         {
             throw new InvalidOperationException(
                 "A collection cannot contain more than 50 items.");
         }
 
-        // No duplicate quotes.
         if (_items.Any(item => item.QuoteId == quoteId))
         {
             throw new InvalidOperationException(
@@ -76,9 +63,6 @@ public class Collection
                 addedAt));
     }
 
-    /// <summary>
-    /// Removes a quote from this collection.
-    /// </summary>
     public void RemoveItem(int quoteId)
     {
         var item = _items.FirstOrDefault(
