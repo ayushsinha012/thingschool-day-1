@@ -11,102 +11,136 @@ public static class QuoteEndpoints
     {
         var group = app.MapGroup("/api/quotes");
 
-        group.MapGet("/", async (
-            int? page,
-            int? size,
-            IQuoteRepository repository,
-            CancellationToken cancellationToken) =>
-        {
-            var currentPage = page.GetValueOrDefault(1);
-            var pageSize = size.GetValueOrDefault(10);
+        // ==========================================
+        // GET /api/quotes
+        // ==========================================
 
-            if (currentPage < 1 || pageSize < 1 || pageSize > 100)
+        group.MapGet(
+            "/",
+            async (
+                int? page,
+                int? size,
+                IQuoteRepository repository,
+                CancellationToken cancellationToken) =>
             {
-                return Results.BadRequest(new ProblemDetails
+                var currentPage = page.GetValueOrDefault(1);
+                var pageSize = size.GetValueOrDefault(10);
+
+                if (currentPage < 1 ||
+                    pageSize < 1 ||
+                    pageSize > 100)
                 {
-                    Title = "Invalid pagination",
-                    Detail = "Page must be at least 1 and size must be between 1 and 100."
-                });
-            }
+                    return Results.BadRequest(
+                        new ProblemDetails
+                        {
+                            Title = "Invalid pagination",
+                            Detail =
+                                "Page must be at least 1 and size must be between 1 and 100."
+                        });
+                }
 
-            var result = await repository.GetPagedAsync(
-                currentPage,
-                pageSize,
-                cancellationToken);
+                var result = await repository.GetPagedAsync(
+                    currentPage,
+                    pageSize,
+                    cancellationToken);
 
-            return Results.Ok(new
-            {
-                page = currentPage,
-                size = pageSize,
-                total = result.Total,
-                items = result.Items
+                return Results.Ok(
+                    new
+                    {
+                        page = currentPage,
+                        size = pageSize,
+                        total = result.Total,
+                        items = result.Items
+                    });
             });
-        });
 
-        group.MapPost("/", async (
-            CreateQuoteRequest request,
-            IQuoteRepository repository,
-            CancellationToken cancellationToken) =>
-        {
-            if (string.IsNullOrWhiteSpace(request.Author) ||
-                string.IsNullOrWhiteSpace(request.Text))
+        // ==========================================
+        // POST /api/quotes
+        // ==========================================
+
+        group.MapPost(
+            "/",
+            async (
+                CreateQuoteRequest request,
+                IQuoteRepository repository,
+                CancellationToken cancellationToken) =>
             {
-                return Results.BadRequest(new ProblemDetails
+                if (string.IsNullOrWhiteSpace(request.Author) ||
+                    string.IsNullOrWhiteSpace(request.Text))
                 {
-                    Title = "Validation failed",
-                    Detail = "Author and text are required."
-                });
-            }
+                    return Results.BadRequest(
+                        new ProblemDetails
+                        {
+                            Title = "Validation failed",
+                            Detail = "Author and text are required."
+                        });
+                }
 
-            var quote = new Quote
+                var quote = new Quote
+                {
+                    Author = request.Author.Trim(),
+                    Text = request.Text.Trim()
+                };
+
+                var created = await repository.AddAsync(
+                    quote,
+                    cancellationToken);
+
+                return Results.Created(
+                    $"/api/quotes/{created.Id}",
+                    created);
+            });
+
+        // ==========================================
+        // GET /api/quotes/{id}
+        // ==========================================
+
+        group.MapGet(
+            "/{id:int}",
+            async (
+                int id,
+                IQuoteRepository repository,
+                CancellationToken cancellationToken) =>
             {
-                Author = request.Author.Trim(),
-                Text = request.Text.Trim()
-            };
+                var quote = await repository.GetByIdAsync(
+                    id,
+                    cancellationToken);
 
-            var created = await repository.AddAsync(
-                quote,
-                cancellationToken);
+                return quote is null
+                    ? Results.NotFound(
+                        new ProblemDetails
+                        {
+                            Title = "Quote not found",
+                            Detail =
+                                $"No quote exists with ID {id}."
+                        })
+                    : Results.Ok(quote);
+            });
 
-            return Results.Created(
-                $"/api/quotes/{created.Id}",
-                created);
-        });
+        // ==========================================
+        // DELETE /api/quotes/{id}
+        // ==========================================
 
-        group.MapGet("/{id:int}", async (
-            int id,
-            IQuoteRepository repository,
-            CancellationToken cancellationToken) =>
-        {
-            var quote = await repository.GetByIdAsync(
-                id,
-                cancellationToken);
+        group.MapDelete(
+            "/{id:int}",
+            async (
+                int id,
+                IQuoteRepository repository,
+                CancellationToken cancellationToken) =>
+            {
+                var deleted = await repository.DeleteAsync(
+                    id,
+                    cancellationToken);
 
-            return quote is null
-                ? Results.NotFound(new ProblemDetails
-                {
-                    Title = "Quote not found",
-                    Detail = $"No quote exists with ID {id}."
-                })
-                : Results.Ok(quote);
-        });
-
-        group.MapDelete("/{id:int}", async (
-            int id,
-            IQuoteRepository repository,
-            CancellationToken cancellationToken) =>
-        {
-            var deleted = await repository.DeleteAsync(
-                id,
-                cancellationToken);
-
-            return deleted
-                ? Results.NoContent()
-                : Results.NotFound(new ProblemDetails
-                {
-                    Title = "Quote not found",
-                    Detail = $"No quote exists with ID {id}."
-                });
-        });
+                return deleted
+                    ? Results.NoContent()
+                    : Results.NotFound(
+                        new ProblemDetails
+                        {
+                            Title = "Quote not found",
+                            Detail =
+                                $"No quote exists with ID {id}."
+                        });
+            });
     }
 }

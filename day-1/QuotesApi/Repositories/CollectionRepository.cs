@@ -28,6 +28,8 @@ public class CollectionRepository : ICollectionRepository
         Collection collection,
         CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(collection);
+
         _db.Collections.Add(collection);
 
         await _db.SaveChangesAsync(cancellationToken);
@@ -37,6 +39,8 @@ public class CollectionRepository : ICollectionRepository
         Collection collection,
         CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(collection);
+
         _db.Collections.Update(collection);
 
         await _db.SaveChangesAsync(cancellationToken);
@@ -46,6 +50,8 @@ public class CollectionRepository : ICollectionRepository
         Collection collection,
         CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(collection);
+
         _db.Collections.Remove(collection);
 
         await _db.SaveChangesAsync(cancellationToken);

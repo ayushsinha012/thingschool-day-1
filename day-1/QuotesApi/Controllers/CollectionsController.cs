@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using QuotesApi.DTOs;
 using QuotesApi.Models;
 using QuotesApi.Repositories;
+using QuotesApi.Services;
 
 namespace QuotesApi.Controllers;
 
@@ -9,12 +11,20 @@ namespace QuotesApi.Controllers;
 public class CollectionsController : ControllerBase
 {
     private readonly ICollectionRepository _repository;
+    private readonly IClock _clock;
 
     public CollectionsController(
-        ICollectionRepository repository)
+        ICollectionRepository repository,
+        IClock clock)
     {
         _repository = repository;
+        _clock = clock;
     }
+
+    // ==========================================
+    // POST /api/collections
+    // Create a new collection
+    // ==========================================
 
     [HttpPost]
     public async Task<IActionResult> CreateCollection(
@@ -38,9 +48,17 @@ public class CollectionsController : ControllerBase
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(new
+            {
+                error = ex.Message
+            });
         }
     }
+
+    // ==========================================
+    // GET /api/collections/{id}
+    // Get a collection
+    // ==========================================
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetCollection(
@@ -53,16 +71,24 @@ public class CollectionsController : ControllerBase
 
         if (collection is null)
         {
-            return NotFound();
+            return NotFound(new
+            {
+                error = $"Collection with ID {id} was not found."
+            });
         }
 
         return Ok(collection);
     }
 
+    // ==========================================
+    // POST /api/collections/{id}/items
+    // Add a quote to a collection
+    // ==========================================
+
     [HttpPost("{id:int}/items")]
     public async Task<IActionResult> AddQuote(
         int id,
-        [FromBody] AddQuoteRequest request,
+        [FromBody] AddCollectionItemRequest request,
         CancellationToken cancellationToken)
     {
         var collection = await _repository.GetByIdAsync(
@@ -71,12 +97,22 @@ public class CollectionsController : ControllerBase
 
         if (collection is null)
         {
-            return NotFound();
+            return NotFound(new
+            {
+                error = $"Collection with ID {id} was not found."
+            });
         }
 
         try
         {
-            collection.AddItem(request.QuoteId);
+            // IMPORTANT:
+            // The controller does NOT directly add anything
+            // to the database.
+            //
+            // The aggregate root controls the mutation.
+            collection.AddItem(
+                request.QuoteId,
+                _clock.UtcNow);
 
             await _repository.UpdateAsync(
                 collection,
@@ -86,13 +122,24 @@ public class CollectionsController : ControllerBase
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(new
+            {
+                error = ex.Message
+            });
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(new
+            {
+                error = ex.Message
+            });
         }
     }
+
+    // ==========================================
+    // DELETE /api/collections/{id}/items/{quoteId}
+    // Remove a quote from a collection
+    // ==========================================
 
     [HttpDelete("{id:int}/items/{quoteId:int}")]
     public async Task<IActionResult> RemoveQuote(
@@ -106,11 +153,15 @@ public class CollectionsController : ControllerBase
 
         if (collection is null)
         {
-            return NotFound();
+            return NotFound(new
+            {
+                error = $"Collection with ID {id} was not found."
+            });
         }
 
         try
         {
+            // Again, mutation goes through the aggregate.
             collection.RemoveItem(quoteId);
 
             await _repository.UpdateAsync(
@@ -121,14 +172,10 @@ public class CollectionsController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(new
+            {
+                error = ex.Message
+            });
         }
     }
 }
-
-public record CreateCollectionRequest(
-    string Name,
-    int OwnerId);
-
-public record AddQuoteRequest(
-    int QuoteId);

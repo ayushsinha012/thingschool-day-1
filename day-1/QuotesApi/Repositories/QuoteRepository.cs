@@ -18,9 +18,23 @@ public class QuoteRepository : IQuoteRepository
         int size,
         CancellationToken cancellationToken)
     {
+        if (page < 1)
+        {
+            throw new ArgumentException(
+                "Page must be greater than or equal to 1.",
+                nameof(page));
+        }
+
+        if (size < 1)
+        {
+            throw new ArgumentException(
+                "Page size must be greater than or equal to 1.",
+                nameof(size));
+        }
+
         var query = _db.Quotes
             .AsNoTracking()
-            .OrderBy(q => q.Id);
+            .OrderBy(quote => quote.Id);
 
         var total = await query.CountAsync(cancellationToken);
 
@@ -38,14 +52,19 @@ public class QuoteRepository : IQuoteRepository
     {
         return await _db.Quotes
             .AsNoTracking()
-            .FirstOrDefaultAsync(q => q.Id == id, cancellationToken);
+            .FirstOrDefaultAsync(
+                quote => quote.Id == id,
+                cancellationToken);
     }
 
     public async Task<Quote> AddAsync(
         Quote quote,
         CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(quote);
+
         _db.Quotes.Add(quote);
+
         await _db.SaveChangesAsync(cancellationToken);
 
         return quote;
@@ -56,12 +75,17 @@ public class QuoteRepository : IQuoteRepository
         CancellationToken cancellationToken)
     {
         var quote = await _db.Quotes
-            .FirstOrDefaultAsync(q => q.Id == id, cancellationToken);
+            .FirstOrDefaultAsync(
+                quote => quote.Id == id,
+                cancellationToken);
 
         if (quote is null)
+        {
             return false;
+        }
 
         _db.Quotes.Remove(quote);
+
         await _db.SaveChangesAsync(cancellationToken);
 
         return true;
