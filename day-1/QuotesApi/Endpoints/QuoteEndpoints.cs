@@ -11,9 +11,7 @@ public static class QuoteEndpoints
     {
         var group = app.MapGroup("/api/quotes");
 
-        // ==========================================
-        // GET /api/quotes
-        // ==========================================
+    
 
         group.MapGet(
             "/",
@@ -54,9 +52,7 @@ public static class QuoteEndpoints
                     });
             });
 
-        // ==========================================
-        // POST /api/quotes
-        // ==========================================
+       
 
         group.MapPost(
             "/",
@@ -65,22 +61,23 @@ public static class QuoteEndpoints
                 IQuoteRepository repository,
                 CancellationToken cancellationToken) =>
             {
-                if (string.IsNullOrWhiteSpace(request.Author) ||
-                    string.IsNullOrWhiteSpace(request.Text))
+                Quote quote;
+
+                try
+                {
+                    quote = Quote.Create(
+                        request.Author,
+                        request.Text);
+                }
+                catch (ArgumentException ex)
                 {
                     return Results.BadRequest(
                         new ProblemDetails
                         {
-                            Title = "Validation failed",
-                            Detail = "Author and text are required."
+                            Title = "Quote validation failed",
+                            Detail = ex.Message
                         });
                 }
-
-                var quote = new Quote
-                {
-                    Author = request.Author.Trim(),
-                    Text = request.Text.Trim()
-                };
 
                 var created = await repository.AddAsync(
                     quote,
@@ -91,9 +88,7 @@ public static class QuoteEndpoints
                     created);
             });
 
-        // ==========================================
-        // GET /api/quotes/{id}
-        // ==========================================
+      
 
         group.MapGet(
             "/{id:int}",
@@ -116,10 +111,6 @@ public static class QuoteEndpoints
                         })
                     : Results.Ok(quote);
             });
-
-        // ==========================================
-        // DELETE /api/quotes/{id}
-        // ==========================================
 
         group.MapDelete(
             "/{id:int}",

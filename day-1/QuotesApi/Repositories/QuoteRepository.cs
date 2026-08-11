@@ -34,9 +34,11 @@ public class QuoteRepository : IQuoteRepository
 
         var query = _db.Quotes
             .AsNoTracking()
+            .Where(quote => !quote.IsDeleted)
             .OrderBy(quote => quote.Id);
 
-        var total = await query.CountAsync(cancellationToken);
+        var total = await query.CountAsync(
+            cancellationToken);
 
         var items = await query
             .Skip((page - 1) * size)
@@ -53,7 +55,9 @@ public class QuoteRepository : IQuoteRepository
         return await _db.Quotes
             .AsNoTracking()
             .FirstOrDefaultAsync(
-                quote => quote.Id == id,
+                quote =>
+                    quote.Id == id &&
+                    !quote.IsDeleted,
                 cancellationToken);
     }
 
@@ -65,7 +69,8 @@ public class QuoteRepository : IQuoteRepository
 
         _db.Quotes.Add(quote);
 
-        await _db.SaveChangesAsync(cancellationToken);
+        await _db.SaveChangesAsync(
+            cancellationToken);
 
         return quote;
     }
@@ -76,7 +81,9 @@ public class QuoteRepository : IQuoteRepository
     {
         var quote = await _db.Quotes
             .FirstOrDefaultAsync(
-                quote => quote.Id == id,
+                quote =>
+                    quote.Id == id &&
+                    !quote.IsDeleted,
                 cancellationToken);
 
         if (quote is null)
@@ -84,9 +91,10 @@ public class QuoteRepository : IQuoteRepository
             return false;
         }
 
-        _db.Quotes.Remove(quote);
+        quote.SoftDelete();
 
-        await _db.SaveChangesAsync(cancellationToken);
+        await _db.SaveChangesAsync(
+            cancellationToken);
 
         return true;
     }
