@@ -20,6 +20,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<IQuoteRepository, QuoteRepository>();
 builder.Services.AddScoped<ICollectionRepository, CollectionRepository>();
+builder.Services.AddScoped<ICollectionService, CollectionService>();
 
 
 builder.Services.AddSingleton<IClock, SystemClock>();
