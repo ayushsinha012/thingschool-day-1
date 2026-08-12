@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <Compile Remove="Tests.Domain/**/*.cs" />
+    <Compile Remove="Tests.Integration/**/*.cs" />
   </ItemGroup>
 
 </Project>
