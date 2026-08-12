@@ -1,7 +1,9 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using QuotesApi.Authorization;
 using QuotesApi.Data;
 using QuotesApi.Endpoints;
 using QuotesApi.Repositories;
@@ -67,7 +69,18 @@ builder.Services
             };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(
+        PermissionClaims.CanEditQuotes,
+        policy => policy.RequireClaim(
+            PermissionClaims.ClaimType,
+            PermissionClaims.CanEditQuotes));
+});
+
+builder.Services.AddScoped<
+    IAuthorizationHandler,
+    CollectionOwnershipAuthorizationHandler>();
 
 var app = builder.Build();
 

@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using QuotesApi.Authorization;
 using QuotesApi.Models;
 
 namespace QuotesApi.Services;
@@ -45,7 +46,11 @@ public sealed class JwtTokenService
 
             new Claim(
                 ClaimTypes.Email,
-                user.Email)
+                user.Email),
+
+            new Claim(
+                PermissionClaims.ClaimType,
+                PermissionClaims.CanEditQuotes)
         };
 
         var securityKey =

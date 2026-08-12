@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using QuotesApi.Authorization;
 using QuotesApi.DTOs;
 using QuotesApi.Models;
 using QuotesApi.Repositories;
@@ -86,7 +87,8 @@ public static class QuoteEndpoints
                 return Results.Created(
                     $"/api/quotes/{created.Id}",
                     created);
-            });
+            })
+            .RequireAuthorization(PermissionClaims.CanEditQuotes);
 
       
 
@@ -132,6 +134,7 @@ public static class QuoteEndpoints
                             Detail =
                                 $"No quote exists with ID {id}."
                         });
-            });
+            })
+            .RequireAuthorization(PermissionClaims.CanEditQuotes);
     }
 }

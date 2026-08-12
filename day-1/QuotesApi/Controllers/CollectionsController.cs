@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using QuotesApi.Authorization;
 using QuotesApi.Services;
 
 namespace QuotesApi.Controllers;
@@ -8,14 +10,18 @@ namespace QuotesApi.Controllers;
 public class CollectionsController : ControllerBase
 {
     private readonly ICollectionService _service;
+    private readonly IAuthorizationService _authorizationService;
 
     public CollectionsController(
-        ICollectionService service)
+        ICollectionService service,
+        IAuthorizationService authorizationService)
     {
         _service = service;
+        _authorizationService = authorizationService;
     }
 
     [HttpPost]
+    [Authorize(Policy = PermissionClaims.CanEditQuotes)]
     public async Task<IActionResult> CreateCollection(
         [FromBody] CreateCollectionRequest request,
         CancellationToken cancellationToken)
@@ -56,11 +62,31 @@ public class CollectionsController : ControllerBase
     }
 
     [HttpPost("{id:int}/items")]
+    [Authorize(Policy = PermissionClaims.CanEditQuotes)]
     public async Task<IActionResult> AddQuote(
         int id,
         [FromBody] AddQuoteRequest request,
         CancellationToken cancellationToken)
     {
+        var existingCollection = await _service.GetByIdAsync(
+            id,
+            cancellationToken);
+
+        if (existingCollection is null)
+        {
+            return NotFound();
+        }
+
+        var authorizationResult = await _authorizationService.AuthorizeAsync(
+            User,
+            existingCollection,
+            new CollectionOwnershipRequirement());
+
+        if (!authorizationResult.Succeeded)
+        {
+            return Forbid();
+        }
+
         try
         {
             var collection = await _service.AddQuoteAsync(
@@ -85,11 +111,31 @@ public class CollectionsController : ControllerBase
     }
 
     [HttpDelete("{id:int}/items/{quoteId:int}")]
+    [Authorize(Policy = PermissionClaims.CanEditQuotes)]
     public async Task<IActionResult> RemoveQuote(
         int id,
         int quoteId,
         CancellationToken cancellationToken)
     {
+        var existingCollection = await _service.GetByIdAsync(
+            id,
+            cancellationToken);
+
+        if (existingCollection is null)
+        {
+            return NotFound();
+        }
+
+        var authorizationResult = await _authorizationService.AuthorizeAsync(
+            User,
+            existingCollection,
+            new CollectionOwnershipRequirement());
+
+        if (!authorizationResult.Succeeded)
+        {
+            return Forbid();
+        }
+
         try
         {
             var collection = await _service.RemoveQuoteAsync(
