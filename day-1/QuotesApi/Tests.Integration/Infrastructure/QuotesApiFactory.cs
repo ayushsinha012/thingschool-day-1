@@ -16,31 +16,41 @@ namespace Tests.Integration.Infrastructure;
 /// Boots the real QuotesApi application (real middleware pipeline, real
 /// routing, real controllers, real minimal API endpoints, real
 /// authentication/authorization configuration) against a dedicated,
-/// temporary SQLite database file so integration tests never touch the
-/// developer's local quotes.db.
+/// disposable SQL Server database running in a Testcontainers container,
+/// so integration tests never touch a developer's local database.
 ///
 /// The application's own startup code (see Program.cs) already calls
 /// AppDbContext.Database.Migrate() and DbSeeder.SeedAsync() before
 /// app.Run(). WebApplicationFactory only intercepts Run(), so that
-/// migration/seeding still executes normally against the isolated
-/// database every time a factory instance is built.
+/// migration/seeding still executes normally against the container-backed
+/// database every time a factory instance is built. Program.cs itself is
+/// untouched - it still registers AppDbContext with the SQLite provider
+/// for production use; this factory replaces that registration with the
+/// SQL Server provider pointed at the running container, in
+/// ConfigureWebHost below.
 ///
 /// Create a new instance per test (do not share via IClassFixture across
-/// multiple test methods) so every test gets its own database file, its
-/// own clock and its own HttpClient.
+/// multiple test methods) so every test gets its own container, its own
+/// clock and its own HttpClient.
 /// </summary>
 public class QuotesApiFactory : WebApplicationFactory<Program>
 {
     private const string TestJwtKey =
         "Tests-Integration-Test-Signing-Key-0123456789-ABCDEFGH";
 
-    private readonly string _databasePath;
+    private readonly SqlServerContainerFixture _sqlServerContainer;
 
     public QuotesApiFactory()
     {
-        _databasePath = Path.Combine(
-            Path.GetTempPath(),
-            $"quotes-integration-tests-{Guid.NewGuid():N}.db");
+        _sqlServerContainer = new SqlServerContainerFixture();
+
+        // The container must be up, with its connection string known,
+        // before ConfigureWebHost runs (that happens the first time
+        // Services/CreateClient() is accessed, not in this constructor).
+        // WebApplicationFactory offers no async construction hook, so we
+        // block here - this is the one place guaranteed to run before the
+        // host is built.
+        _sqlServerContainer.StartAsync().GetAwaiter().GetResult();
     }
 
     /// <summary>
@@ -56,12 +66,23 @@ public class QuotesApiFactory : WebApplicationFactory<Program>
     {
         builder.UseSetting("Jwt:Key", TestJwtKey);
 
+        var connectionString = _sqlServerContainer.ConnectionString;
+
         builder.UseSetting(
             "ConnectionStrings:DefaultConnection",
-            $"Data Source={_databasePath}");
+            connectionString);
 
         builder.ConfigureTestServices(services =>
         {
+            // Program.cs registers AppDbContext against the SQLite
+            // provider for production use. Replace that registration
+            // here so tests run against the real SQL Server container
+            // instead - Program.cs itself is not modified.
+            services.RemoveAll<DbContextOptions<AppDbContext>>();
+
+            services.AddDbContext<AppDbContext>(options =>
+                options.UseSqlServer(connectionString));
+
             services.RemoveAll<IClock>();
             services.AddSingleton<IClock>(Clock);
         });
@@ -113,9 +134,9 @@ public class QuotesApiFactory : WebApplicationFactory<Program>
     {
         base.Dispose(disposing);
 
-        if (disposing && File.Exists(_databasePath))
+        if (disposing)
         {
-            File.Delete(_databasePath);
+            _sqlServerContainer.DisposeAsync().AsTask().GetAwaiter().GetResult();
         }
     }
 }

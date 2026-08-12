@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # Docker is preinstalled and running on GitHub-hosted ubuntu-latest
+      # runners, so Testcontainers.MsSql can start its own SQL Server
+      # container below with no extra setup and no manually-created
+      # SQL Server service.
+
+      - name: Restore
+        run: dotnet restore day-1/QuotesApi/Tests.Integration/Tests.Integration.csproj
+
+      - name: Build Tests.Integration
+        run: dotnet build day-1/QuotesApi/Tests.Integration/Tests.Integration.csproj --no-restore
+
+      - name: Run integration tests
+        run: dotnet test day-1/QuotesApi/Tests.Integration/Tests.Integration.csproj --no-restore
