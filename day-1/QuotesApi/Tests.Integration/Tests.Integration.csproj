@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\QuotesApi.csproj" />
+    <ProjectReference Include="..\Migrations.SqlServer\QuotesApi.Migrations.SqlServer.csproj" />
   </ItemGroup>
 
 </Project>

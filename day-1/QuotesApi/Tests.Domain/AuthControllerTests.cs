@@ -5,12 +5,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
 using QuotesApi.Authorization;
 using QuotesApi.Controllers;
 using QuotesApi.Data;
 using QuotesApi.DTOs;
 using QuotesApi.Models;
 using QuotesApi.Services;
+using Tests.Domain.TestDoubles;
 
 namespace Tests.Domain;
 
@@ -20,6 +22,12 @@ namespace Tests.Domain;
 /// (no mocking framework) and a real <see cref="JwtTokenService"/>, so
 /// the tests exercise the actual credential-checking and token-issuing
 /// behavior rather than a stand-in for it.
+///
+/// Note: request-shape validation (missing email/password) is now
+/// enforced by [ApiController]'s automatic ValidationProblemDetails
+/// filter, which only runs through the real MVC pipeline - calling the
+/// controller method directly (as these unit tests do) bypasses it. That
+/// behavior is covered by an HTTP-level test in Tests.Integration instead.
 /// </summary>
 public class AuthControllerTests : IDisposable
 {
@@ -51,7 +59,9 @@ public class AuthControllerTests : IDisposable
 
         _controller = new AuthController(
             _db,
-            new JwtTokenService(configuration));
+            new JwtTokenService(configuration),
+            new RefreshTokenService(_db, new FakeClock(DateTimeOffset.UtcNow), NullLogger<RefreshTokenService>.Instance),
+            NullLogger<AuthController>.Instance);
     }
 
     private async Task SeedUserAsync(string email, string password)
@@ -63,37 +73,6 @@ public class AuthControllerTests : IDisposable
         });
 
         await _db.SaveChangesAsync();
-    }
-
-    [Fact]
-    public async Task Login_WithMissingEmail_ReturnsBadRequestAndDoesNotQueryUsers()
-    {
-        // Arrange
-        await SeedUserAsync("user@example.com", "correct-password");
-
-        // Act
-        var result = await _controller.Login(
-            new LoginRequest(Email: "", Password: "correct-password"),
-            CancellationToken.None);
-
-        // Assert
-        var badRequest = result.Should().BeOfType<BadRequestObjectResult>().Subject;
-        var problem = badRequest.Value.Should().BeOfType<ProblemDetails>().Subject;
-        problem.Title.Should().Be("Validation failed");
-    }
-
-    [Fact]
-    public async Task Login_WithMissingPassword_ReturnsBadRequest()
-    {
-        // Act
-        var result = await _controller.Login(
-            new LoginRequest(Email: "user@example.com", Password: "   "),
-            CancellationToken.None);
-
-        // Assert
-        var badRequest = result.Should().BeOfType<BadRequestObjectResult>().Subject;
-        var problem = badRequest.Value.Should().BeOfType<ProblemDetails>().Subject;
-        problem.Title.Should().Be("Validation failed");
     }
 
     [Fact]

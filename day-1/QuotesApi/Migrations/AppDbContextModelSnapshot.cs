@@ -33,7 +33,7 @@ namespace QuotesApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Collections");
+                    b.ToTable("Collections", (string)null);
                 });
 
             modelBuilder.Entity("QuotesApi.Models.Quote", b =>
@@ -55,7 +55,47 @@ namespace QuotesApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Quotes");
+                    b.ToTable("Quotes", (string)null);
+                });
+
+            modelBuilder.Entity("QuotesApi.Models.RefreshToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("FamilyId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ReplacedByTokenHash")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FamilyId");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens", (string)null);
                 });
 
             modelBuilder.Entity("QuotesApi.Models.User", b =>
@@ -78,7 +118,7 @@ namespace QuotesApi.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("QuotesApi.Models.Collection", b =>
@@ -102,7 +142,7 @@ namespace QuotesApi.Migrations
 
                             b1.HasIndex("CollectionId");
 
-                            b1.ToTable("CollectionItem");
+                            b1.ToTable("CollectionItem", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("CollectionId");

@@ -17,6 +17,8 @@ public class AppDbContext : DbContext
 
     public DbSet<User> Users => Set<User>();
 
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
     protected override void OnModelCreating(
         ModelBuilder modelBuilder)
     {
@@ -81,6 +83,21 @@ public class AppDbContext : DbContext
 
             entity.HasIndex(user => user.Email)
                 .IsUnique();
+        });
+
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.HasKey(token => token.Id);
+
+            entity.Property(token => token.TokenHash)
+                .IsRequired();
+
+            entity.HasIndex(token => token.TokenHash)
+                .IsUnique();
+
+            entity.HasIndex(token => token.FamilyId);
+
+            entity.HasIndex(token => token.UserId);
         });
     }
 }

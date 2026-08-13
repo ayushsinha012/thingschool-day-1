@@ -103,6 +103,12 @@ public class AuthorizationTestFactory : WebApplicationFactory<Program>
 
         if (disposing && File.Exists(_databasePath))
         {
+            // On Windows, the SQLite connection pool can still hold the
+            // file handle briefly after the host disposes its DbContext
+            // scope - clear it first so the delete below doesn't race a
+            // lingering lock.
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+
             File.Delete(_databasePath);
         }
     }

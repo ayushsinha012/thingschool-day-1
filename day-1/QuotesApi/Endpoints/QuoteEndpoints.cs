@@ -3,8 +3,11 @@ using QuotesApi.Authorization;
 using QuotesApi.DTOs;
 using QuotesApi.Models;
 using QuotesApi.Repositories;
+using QuotesApi.Validation;
 
 namespace QuotesApi.Endpoints;
+
+public sealed class QuoteEndpointsLogCategory;
 
 public static class QuoteEndpoints
 {
@@ -12,14 +15,13 @@ public static class QuoteEndpoints
     {
         var group = app.MapGroup("/api/quotes");
 
-    
-
         group.MapGet(
             "/",
             async (
                 int? page,
                 int? size,
                 IQuoteRepository repository,
+                ILogger<QuoteEndpointsLogCategory> logger,
                 CancellationToken cancellationToken) =>
             {
                 var currentPage = page.GetValueOrDefault(1);
@@ -29,6 +31,11 @@ public static class QuoteEndpoints
                     pageSize < 1 ||
                     pageSize > 100)
                 {
+                    logger.LogWarning(
+                        "Rejected quote listing request with page {Page} size {Size}",
+                        currentPage,
+                        pageSize);
+
                     return Results.BadRequest(
                         new ProblemDetails
                         {
@@ -43,6 +50,13 @@ public static class QuoteEndpoints
                     pageSize,
                     cancellationToken);
 
+                logger.LogInformation(
+                    "Listed quotes page {Page} size {Size}, returned {Count} of {Total}",
+                    currentPage,
+                    pageSize,
+                    result.Items.Count(),
+                    result.Total);
+
                 return Results.Ok(
                     new
                     {
@@ -53,15 +67,21 @@ public static class QuoteEndpoints
                     });
             });
 
-       
-
         group.MapPost(
             "/",
             async (
                 CreateQuoteRequest request,
                 IQuoteRepository repository,
+                ILogger<QuoteEndpointsLogCategory> logger,
                 CancellationToken cancellationToken) =>
             {
+                var validationProblem = ValidationExtensions.Validate(request);
+
+                if (validationProblem is not null)
+                {
+                    return validationProblem;
+                }
+
                 Quote quote;
 
                 try
@@ -72,6 +92,10 @@ public static class QuoteEndpoints
                 }
                 catch (ArgumentException ex)
                 {
+                    logger.LogWarning(
+                        "Quote creation rejected: {Reason}",
+                        ex.Message);
+
                     return Results.BadRequest(
                         new ProblemDetails
                         {
@@ -84,34 +108,44 @@ public static class QuoteEndpoints
                     quote,
                     cancellationToken);
 
+                logger.LogInformation(
+                    "Created quote {QuoteId}",
+                    created.Id);
+
                 return Results.Created(
                     $"/api/quotes/{created.Id}",
                     created);
             })
             .RequireAuthorization(PermissionClaims.CanEditQuotes);
 
-      
-
         group.MapGet(
             "/{id:int}",
             async (
                 int id,
                 IQuoteRepository repository,
+                ILogger<QuoteEndpointsLogCategory> logger,
                 CancellationToken cancellationToken) =>
             {
                 var quote = await repository.GetByIdAsync(
                     id,
                     cancellationToken);
 
-                return quote is null
-                    ? Results.NotFound(
+                if (quote is null)
+                {
+                    logger.LogWarning(
+                        "Quote {QuoteId} not found",
+                        id);
+
+                    return Results.NotFound(
                         new ProblemDetails
                         {
                             Title = "Quote not found",
                             Detail =
                                 $"No quote exists with ID {id}."
-                        })
-                    : Results.Ok(quote);
+                        });
+                }
+
+                return Results.Ok(quote);
             });
 
         group.MapDelete(
@@ -119,21 +153,33 @@ public static class QuoteEndpoints
             async (
                 int id,
                 IQuoteRepository repository,
+                ILogger<QuoteEndpointsLogCategory> logger,
                 CancellationToken cancellationToken) =>
             {
                 var deleted = await repository.DeleteAsync(
                     id,
                     cancellationToken);
 
-                return deleted
-                    ? Results.NoContent()
-                    : Results.NotFound(
+                if (!deleted)
+                {
+                    logger.LogWarning(
+                        "Delete failed, quote {QuoteId} not found",
+                        id);
+
+                    return Results.NotFound(
                         new ProblemDetails
                         {
                             Title = "Quote not found",
                             Detail =
                                 $"No quote exists with ID {id}."
                         });
+                }
+
+                logger.LogInformation(
+                    "Deleted quote {QuoteId}",
+                    id);
+
+                return Results.NoContent();
             })
             .RequireAuthorization(PermissionClaims.CanEditQuotes);
     }

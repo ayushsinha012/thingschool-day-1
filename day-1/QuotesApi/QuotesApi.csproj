@@ -15,11 +15,14 @@
     </PackageReference>
 
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.10" />
+    <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+    <PackageReference Include="Serilog.Settings.Configuration" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Remove="Tests.Domain/**/*.cs" />
     <Compile Remove="Tests.Integration/**/*.cs" />
+    <Compile Remove="Migrations.SqlServer/**/*.cs" />
   </ItemGroup>
 
 </Project>

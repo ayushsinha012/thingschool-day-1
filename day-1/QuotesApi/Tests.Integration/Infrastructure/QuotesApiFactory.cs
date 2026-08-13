@@ -1,10 +1,16 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using BCrypt.Net;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.IdentityModel.Tokens;
+using QuotesApi.Authorization;
 using QuotesApi.Data;
 using QuotesApi.Models;
 using QuotesApi.Services;
@@ -78,10 +84,37 @@ public class QuotesApiFactory : WebApplicationFactory<Program>
             // provider for production use. Replace that registration
             // here so tests run against the real SQL Server container
             // instead - Program.cs itself is not modified.
+            //
+            // AddDbContext registers its configuring lambda as an
+            // additive singleton (IDbContextOptionsConfiguration<T>),
+            // separate from the DbContextOptions<T> descriptor itself.
+            // Removing only DbContextOptions<AppDbContext> leaves
+            // Program.cs's UseSqlite(...) configuration registered, so
+            // both it and the UseSqlServer(...) call below would be
+            // applied together the next time the options are built -
+            // registering two providers for the same context. Removing
+            // the configuration entry too ensures only UseSqlServer
+            // applies.
             services.RemoveAll<DbContextOptions<AppDbContext>>();
+            services.RemoveAll<IDbContextOptionsConfiguration<AppDbContext>>();
 
             services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(connectionString));
+                options.UseSqlServer(
+                    connectionString,
+                    // EF Core migrations bake in provider-specific column
+                    // types at generation time, so the SQLite migrations
+                    // Program.cs applies in production cannot be replayed
+                    // against a real SQL Server database (e.g. a column
+                    // authored as SQLite TEXT becomes an unindexable SQL
+                    // Server type). QuotesApi.Migrations.SqlServer holds a
+                    // separate migrations history generated specifically
+                    // for SQL Server, targeting the same AppDbContext -
+                    // point Program.cs's unmodified Database.Migrate() at
+                    // that assembly instead when running under this
+                    // container.
+                    sql => sql.MigrationsAssembly(
+                        typeof(QuotesApi.Migrations.SqlServer.SqlServerDesignTimeDbContextFactory)
+                            .Assembly.GetName().Name)));
 
             services.RemoveAll<IClock>();
             services.AddSingleton<IClock>(Clock);
@@ -128,6 +161,36 @@ public class QuotesApiFactory : WebApplicationFactory<Program>
             .GetRequiredService<JwtTokenService>();
 
         return jwtTokenService.CreateAccessToken(user);
+    }
+
+    /// <summary>
+    /// Mints a JWT signed with the same test key the test host trusts, but
+    /// already expired - used to prove expired-token requests are rejected
+    /// with 401 and the correct WWW-Authenticate header, without waiting
+    /// out a real token lifetime.
+    /// </summary>
+    public string CreateExpiredAccessToken(User user)
+    {
+        var keyBytes = Encoding.UTF8.GetBytes(TestJwtKey);
+        var securityKey = new SymmetricSecurityKey(keyBytes);
+
+        var credentials = new SigningCredentials(
+            securityKey,
+            SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(PermissionClaims.ClaimType, PermissionClaims.CanEditQuotes)
+        };
+
+        var token = new JwtSecurityToken(
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(-5),
+            signingCredentials: credentials);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
     protected override void Dispose(bool disposing)
