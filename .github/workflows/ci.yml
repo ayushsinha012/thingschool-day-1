@@ -3,6 +3,7 @@ name: CI
 on:
   push:
   pull_request:
+    branches: [main]
 
 jobs:
   test:
@@ -22,11 +23,78 @@ jobs:
       # container below with no extra setup and no manually-created
       # SQL Server service.
 
-      - name: Restore
+      - name: Restore Tests.Domain
+        run: dotnet restore day-1/QuotesApi/Tests.Domain/Tests.Domain.csproj
+
+      - name: Restore Tests.Integration
         run: dotnet restore day-1/QuotesApi/Tests.Integration/Tests.Integration.csproj
+
+      - name: Build Tests.Domain
+        run: dotnet build day-1/QuotesApi/Tests.Domain/Tests.Domain.csproj --no-restore
 
       - name: Build Tests.Integration
         run: dotnet build day-1/QuotesApi/Tests.Integration/Tests.Integration.csproj --no-restore
 
-      - name: Run integration tests
-        run: dotnet test day-1/QuotesApi/Tests.Integration/Tests.Integration.csproj --no-restore
+      - name: Run unit tests (Tests.Domain)
+        run: >
+          dotnet test day-1/QuotesApi/Tests.Domain/Tests.Domain.csproj
+          --no-build
+          --logger "trx;LogFileName=Tests.Domain.trx"
+          --collect:"XPlat Code Coverage"
+          --results-directory ./TestResults/Domain
+
+      - name: Run integration tests (Tests.Integration)
+        run: >
+          dotnet test day-1/QuotesApi/Tests.Integration/Tests.Integration.csproj
+          --no-build
+          --logger "trx;LogFileName=Tests.Integration.trx"
+          --collect:"XPlat Code Coverage"
+          --results-directory ./TestResults/Integration
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults/**/*.trx
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: TestResults/**/coverage.cobertura.xml
+
+      - name: Enforce total line coverage >= 70%
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          THRESHOLD=70
+          COVERED=0
+          VALID=0
+          FOUND=0
+
+          while IFS= read -r -d '' f; do
+            FOUND=1
+            c=$(grep -oP 'lines-covered="\K[0-9]+' "$f" | head -1)
+            v=$(grep -oP 'lines-valid="\K[0-9]+' "$f" | head -1)
+            echo "  $f -> covered=$c valid=$v"
+            COVERED=$((COVERED + c))
+            VALID=$((VALID + v))
+          done < <(find TestResults -name "coverage.cobertura.xml" -print0)
+
+          if [ "$FOUND" -eq 0 ]; then
+            echo "No coverage.cobertura.xml files found under TestResults/"
+            exit 1
+          fi
+
+          if [ "$VALID" -eq 0 ]; then
+            echo "No coverable lines found; cannot compute coverage."
+            exit 1
+          fi
+
+          PERCENTAGE=$(awk "BEGIN { printf \"%.2f\", ($COVERED / $VALID) * 100 }")
+          echo "Total line coverage: $PERCENTAGE% (threshold: ${THRESHOLD}%)"
+
+          awk "BEGIN { exit !($PERCENTAGE >= $THRESHOLD) }"
