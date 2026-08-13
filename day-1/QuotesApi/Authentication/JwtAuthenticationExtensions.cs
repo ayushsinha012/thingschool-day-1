@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using QuotesApi.Services;
 
 namespace QuotesApi.Authentication;
 
@@ -22,7 +23,27 @@ public static class JwtAuthenticationExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var jwtKey = configuration["Jwt:Key"];
+        // Register the typed options so any DI-resolved consumer (e.g.
+        // JwtTokenService) gets them via IOptions<T>/IOptionsSnapshot<T>/
+        // IOptionsMonitor<T> - bound from IConfiguration, so environment
+        // variables and appsettings.{Environment}.json still take
+        // precedence over appsettings.json exactly as before.
+        services.Configure<JwtOptions>(
+            configuration.GetSection(JwtOptions.SectionName));
+
+        services.Configure<EntraSettings>(
+            configuration.GetSection("Entra"));
+
+        // This method itself runs during service registration, before the
+        // DI container exists, so IOptions<T> isn't resolvable yet here -
+        // bind directly from IConfiguration for the fail-fast startup
+        // checks below (same source, same precedence as the Configure<T>
+        // registrations above).
+        var jwtOptions = configuration
+            .GetSection(JwtOptions.SectionName)
+            .Get<JwtOptions>() ?? new JwtOptions();
+
+        var jwtKey = jwtOptions.Key;
 
         if (string.IsNullOrWhiteSpace(jwtKey))
         {

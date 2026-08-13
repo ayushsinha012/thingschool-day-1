@@ -6,6 +6,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using QuotesApi.Authorization;
 using QuotesApi.Controllers;
 using QuotesApi.Data;
@@ -57,9 +58,13 @@ public class AuthControllerTests : IDisposable
             })
             .Build();
 
+        var jwtOptions = configuration
+            .GetSection(JwtOptions.SectionName)
+            .Get<JwtOptions>() ?? new JwtOptions();
+
         _controller = new AuthController(
             _db,
-            new JwtTokenService(configuration),
+            new JwtTokenService(Options.Create(jwtOptions)),
             new RefreshTokenService(_db, new FakeClock(DateTimeOffset.UtcNow), NullLogger<RefreshTokenService>.Instance),
             NullLogger<AuthController>.Instance);
     }

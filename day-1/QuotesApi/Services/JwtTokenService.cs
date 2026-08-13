@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using QuotesApi.Authorization;
 using QuotesApi.Models;
@@ -9,16 +10,16 @@ namespace QuotesApi.Services;
 
 public sealed class JwtTokenService
 {
-    private readonly IConfiguration _configuration;
+    private readonly JwtOptions _options;
 
-    public JwtTokenService(IConfiguration configuration)
+    public JwtTokenService(IOptions<JwtOptions> options)
     {
-        _configuration = configuration;
+        _options = options.Value;
     }
 
     public string CreateAccessToken(User user)
     {
-        var key = _configuration["Jwt:Key"];
+        var key = _options.Key;
 
         if (string.IsNullOrWhiteSpace(key))
         {
@@ -34,9 +35,7 @@ public sealed class JwtTokenService
                 "JWT signing key must be at least 256 bits.");
         }
 
-        var expiresInMinutes =
-            _configuration.GetValue<int?>(
-                "Jwt:AccessTokenMinutes") ?? 15;
+        var expiresInMinutes = _options.AccessTokenMinutes;
 
         var claims = new[]
         {
@@ -71,12 +70,6 @@ public sealed class JwtTokenService
             .WriteToken(token);
     }
 
-    public int GetAccessTokenLifetimeSeconds()
-    {
-        var minutes =
-            _configuration.GetValue<int?>(
-                "Jwt:AccessTokenMinutes") ?? 15;
-
-        return minutes * 60;
-    }
+    public int GetAccessTokenLifetimeSeconds() =>
+        _options.AccessTokenMinutes * 60;
 }

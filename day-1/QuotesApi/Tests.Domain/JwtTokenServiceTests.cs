@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using QuotesApi.Authorization;
 using QuotesApi.Models;
 using QuotesApi.Services;
@@ -10,7 +11,9 @@ namespace Tests.Domain;
 
 /// <summary>
 /// Unit tests for <see cref="JwtTokenService"/> using a real
-/// <see cref="IConfiguration"/> built in-memory (no mocking framework).
+/// <see cref="IConfiguration"/> built in-memory (no mocking framework),
+/// bound into <see cref="JwtOptions"/> the same way DI would via
+/// services.Configure&lt;JwtOptions&gt;(...).
 /// </summary>
 public class JwtTokenServiceTests
 {
@@ -38,12 +41,24 @@ public class JwtTokenServiceTests
             .Build();
     }
 
+    private static JwtTokenService CreateService(
+        string? key,
+        int? accessTokenMinutes = null)
+    {
+        var configuration = BuildConfiguration(key, accessTokenMinutes);
+
+        var options = configuration
+            .GetSection(JwtOptions.SectionName)
+            .Get<JwtOptions>() ?? new JwtOptions();
+
+        return new JwtTokenService(Options.Create(options));
+    }
+
     [Fact]
     public void CreateAccessToken_WithValidConfiguration_ReturnsTokenContainingExpectedClaims()
     {
         // Arrange
-        var configuration = BuildConfiguration(ValidSigningKey);
-        var service = new JwtTokenService(configuration);
+        var service = CreateService(ValidSigningKey);
         var user = new User { Id = 7, Email = "user@example.com" };
 
         // Act
@@ -64,8 +79,7 @@ public class JwtTokenServiceTests
     public void CreateAccessToken_WithMissingSigningKey_ThrowsInvalidOperationException()
     {
         // Arrange
-        var configuration = BuildConfiguration(key: null);
-        var service = new JwtTokenService(configuration);
+        var service = CreateService(key: null);
         var user = new User { Id = 1, Email = "user@example.com" };
 
         // Act
@@ -79,8 +93,7 @@ public class JwtTokenServiceTests
     public void CreateAccessToken_WithSigningKeyShorterThan256Bits_ThrowsInvalidOperationException()
     {
         // Arrange
-        var configuration = BuildConfiguration(key: "too-short-key");
-        var service = new JwtTokenService(configuration);
+        var service = CreateService(key: "too-short-key");
         var user = new User { Id = 1, Email = "user@example.com" };
 
         // Act
@@ -94,8 +107,7 @@ public class JwtTokenServiceTests
     public void CreateAccessToken_UsesConfiguredAccessTokenMinutes_ForExpiry()
     {
         // Arrange
-        var configuration = BuildConfiguration(ValidSigningKey, accessTokenMinutes: 45);
-        var service = new JwtTokenService(configuration);
+        var service = CreateService(ValidSigningKey, accessTokenMinutes: 45);
         var user = new User { Id = 1, Email = "user@example.com" };
         var expectedExpiry = DateTime.UtcNow.AddMinutes(45);
 
@@ -111,8 +123,7 @@ public class JwtTokenServiceTests
     public void GetAccessTokenLifetimeSeconds_WithConfiguredMinutes_ReturnsMinutesConvertedToSeconds()
     {
         // Arrange
-        var configuration = BuildConfiguration(ValidSigningKey, accessTokenMinutes: 10);
-        var service = new JwtTokenService(configuration);
+        var service = CreateService(ValidSigningKey, accessTokenMinutes: 10);
 
         // Act
         var lifetimeSeconds = service.GetAccessTokenLifetimeSeconds();
@@ -125,8 +136,7 @@ public class JwtTokenServiceTests
     public void GetAccessTokenLifetimeSeconds_WithNoConfiguredMinutes_DefaultsToFifteenMinutes()
     {
         // Arrange
-        var configuration = BuildConfiguration(ValidSigningKey);
-        var service = new JwtTokenService(configuration);
+        var service = CreateService(ValidSigningKey);
 
         // Act
         var lifetimeSeconds = service.GetAccessTokenLifetimeSeconds();
