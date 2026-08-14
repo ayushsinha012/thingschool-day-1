@@ -5,6 +5,14 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>b4472236-47ac-4b0e-ad08-116d63b5e25e</UserSecretsId>
+
+    <ContainerImageName>quotes-api</ContainerImageName>
+    <ContainerImageTag>0.1.0</ContainerImageTag>
+    <ContainerBaseImage>mcr.microsoft.com/dotnet/aspnet:10.0-alpine</ContainerBaseImage>
+    <!-- The base image is musl-libc (Alpine); without this, publish embeds
+         the glibc build of the SQLite native library, which fails to load
+         at runtime inside the container. -->
+    <ContainerRuntimeIdentifier>linux-musl-x64</ContainerRuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>
