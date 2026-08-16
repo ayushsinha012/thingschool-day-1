@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace QuotesApi.DTOs;
 
 // ==========================================
@@ -5,8 +7,8 @@ namespace QuotesApi.DTOs;
 // ==========================================
 
 public record CreateQuoteRequest(
-    string Author,
-    string Text
+    [Required, StringLength(200, MinimumLength = 1)] string Author,
+    [Required, StringLength(1000, MinimumLength = 1)] string Text
 );
 
 // ==========================================
@@ -14,10 +16,10 @@ public record CreateQuoteRequest(
 // ==========================================
 
 public record CreateCollectionRequest(
-    string Name,
-    int OwnerId
+    [Required, StringLength(80, MinimumLength = 3)] string Name,
+    [Range(1, int.MaxValue)] int OwnerId
 );
 
 public record AddCollectionItemRequest(
-    int QuoteId
+    [Range(1, int.MaxValue)] int QuoteId
 );

@@ -1,80 +1,43 @@
-using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using QuotesApi.Data;
 using QuotesApi.Endpoints;
-using QuotesApi.Repositories;
-using QuotesApi.Services;
+using QuotesApi.Extensions;
+using Serilog;
+using Serilog.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Host.UseSerilog((context, services, configuration) =>
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .Enrich.FromLogContext());
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(
-        builder.Configuration.GetConnectionString("DefaultConnection")
-        ?? "Data Source=quotes.db"));
-
-builder.Services.AddScoped<IQuoteRepository, QuoteRepository>();
-builder.Services.AddScoped<ICollectionRepository, CollectionRepository>();
-
-
-builder.Services.AddSingleton<IClock, SystemClock>();
-builder.Services.AddTransient<QuoteFormatter>();
-
-
-builder.Services.AddSingleton<JwtTokenService>();
-
-
-var jwtKey = builder.Configuration["Jwt:Key"];
-
-if (string.IsNullOrWhiteSpace(jwtKey))
-{
-    throw new InvalidOperationException(
-        "JWT signing key is not configured. Set Jwt__Key.");
-}
-
-var jwtKeyBytes = Encoding.UTF8.GetBytes(jwtKey);
-
-if (jwtKeyBytes.Length < 32)
-{
-    throw new InvalidOperationException(
-        "JWT signing key must be at least 256 bits.");
-}
-
-
-builder.Services
-    .AddAuthentication(
-        JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters =
-            new TokenValidationParameters
-            {
-                ValidateIssuerSigningKey = true,
-
-                IssuerSigningKey =
-                    new SymmetricSecurityKey(jwtKeyBytes),
-
-                ValidateIssuer = false,
-
-                ValidateAudience = false,
-
-                ValidateLifetime = true,
-
-                ClockSkew = TimeSpan.Zero
-            };
-    });
-
-builder.Services.AddAuthorization();
+builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
+app.UseExceptionHandler();
+
+app.Use(async (context, next) =>
+{
+    // Prefer the W3C trace ID from the current OpenTelemetry Activity - the same ID
+    // that the ASP.NET Core/HttpClient instrumentation attaches to spans exported to
+    // Azure Application Insights - so Serilog's "TraceId" property, this request's
+    // trace, and its Application Insights telemetry all share one identifier. Falls
+    // back to the ASP.NET Core request identifier if no Activity is present (e.g. no
+    // listener is currently sampling), so correlation never breaks.
+    var traceId = Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier;
+
+    using (LogContext.PushProperty("TraceId", traceId))
+    {
+        await next();
+    }
+});
+
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider
-        .GetRequiredService<AppDbContext>();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
     db.Database.Migrate();
 
@@ -85,9 +48,12 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
+app.MapHealthChecks("/health");
+
 app.MapQuoteEndpoints();
 
 app.MapControllers();
+
 app.Run();
 
 public partial class Program

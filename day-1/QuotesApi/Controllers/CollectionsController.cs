@@ -1,4 +1,7 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using QuotesApi.Authorization;
+using QuotesApi.DTOs;
 using QuotesApi.Services;
 
 namespace QuotesApi.Controllers;
@@ -8,14 +11,21 @@ namespace QuotesApi.Controllers;
 public class CollectionsController : ControllerBase
 {
     private readonly ICollectionService _service;
+    private readonly IAuthorizationService _authorizationService;
+    private readonly ILogger<CollectionsController> _logger;
 
     public CollectionsController(
-        ICollectionService service)
+        ICollectionService service,
+        IAuthorizationService authorizationService,
+        ILogger<CollectionsController> logger)
     {
         _service = service;
+        _authorizationService = authorizationService;
+        _logger = logger;
     }
 
     [HttpPost]
+    [Authorize(Policy = PermissionClaims.CanEditQuotes)]
     public async Task<IActionResult> CreateCollection(
         [FromBody] CreateCollectionRequest request,
         CancellationToken cancellationToken)
@@ -27,6 +37,11 @@ public class CollectionsController : ControllerBase
                 request.OwnerId,
                 cancellationToken);
 
+            _logger.LogInformation(
+                "Created collection {CollectionId} for owner {OwnerId}",
+                collection.Id,
+                collection.OwnerId);
+
             return CreatedAtAction(
                 nameof(GetCollection),
                 new { id = collection.Id },
@@ -34,7 +49,14 @@ public class CollectionsController : ControllerBase
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(ex.Message);
+            _logger.LogWarning(
+                "Collection creation rejected: {Reason}",
+                ex.Message);
+
+            return Problem(
+                title: "Collection validation failed",
+                detail: ex.Message,
+                statusCode: StatusCodes.Status400BadRequest);
         }
     }
 
@@ -56,17 +78,42 @@ public class CollectionsController : ControllerBase
     }
 
     [HttpPost("{id:int}/items")]
+    [Authorize(Policy = PermissionClaims.CanEditQuotes)]
     public async Task<IActionResult> AddQuote(
         int id,
-        [FromBody] AddQuoteRequest request,
+        [FromBody] AddCollectionItemRequest request,
         CancellationToken cancellationToken)
     {
+        var existingCollection = await _service.GetByIdAsync(
+            id,
+            cancellationToken);
+
+        if (existingCollection is null)
+        {
+            return NotFound();
+        }
+
+        var authorizationResult = await _authorizationService.AuthorizeAsync(
+            User,
+            existingCollection,
+            new CollectionOwnershipRequirement());
+
+        if (!authorizationResult.Succeeded)
+        {
+            return Forbid();
+        }
+
         try
         {
             var collection = await _service.AddQuoteAsync(
                 id,
                 request.QuoteId,
                 cancellationToken);
+
+            _logger.LogInformation(
+                "Added quote {QuoteId} to collection {CollectionId}",
+                request.QuoteId,
+                id);
 
             return Ok(collection);
         }
@@ -76,26 +123,62 @@ public class CollectionsController : ControllerBase
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(ex.Message);
+            return Problem(
+                title: "Collection validation failed",
+                detail: ex.Message,
+                statusCode: StatusCodes.Status400BadRequest);
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ex.Message);
+            _logger.LogWarning(
+                "Add quote to collection {CollectionId} rejected: {Reason}",
+                id,
+                ex.Message);
+
+            return Problem(
+                title: "Collection invariant violated",
+                detail: ex.Message,
+                statusCode: StatusCodes.Status400BadRequest);
         }
     }
 
     [HttpDelete("{id:int}/items/{quoteId:int}")]
+    [Authorize(Policy = PermissionClaims.CanEditQuotes)]
     public async Task<IActionResult> RemoveQuote(
         int id,
         int quoteId,
         CancellationToken cancellationToken)
     {
+        var existingCollection = await _service.GetByIdAsync(
+            id,
+            cancellationToken);
+
+        if (existingCollection is null)
+        {
+            return NotFound();
+        }
+
+        var authorizationResult = await _authorizationService.AuthorizeAsync(
+            User,
+            existingCollection,
+            new CollectionOwnershipRequirement());
+
+        if (!authorizationResult.Succeeded)
+        {
+            return Forbid();
+        }
+
         try
         {
             var collection = await _service.RemoveQuoteAsync(
                 id,
                 quoteId,
                 cancellationToken);
+
+            _logger.LogInformation(
+                "Removed quote {QuoteId} from collection {CollectionId}",
+                quoteId,
+                id);
 
             return Ok(collection);
         }
@@ -105,14 +188,15 @@ public class CollectionsController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ex.Message);
+            _logger.LogWarning(
+                "Remove quote from collection {CollectionId} rejected: {Reason}",
+                id,
+                ex.Message);
+
+            return Problem(
+                title: "Collection invariant violated",
+                detail: ex.Message,
+                statusCode: StatusCodes.Status400BadRequest);
         }
     }
 }
-
-public record CreateCollectionRequest(
-    string Name,
-    int OwnerId);
-
-public record AddQuoteRequest(
-    int QuoteId);

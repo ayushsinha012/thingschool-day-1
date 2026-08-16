@@ -1,5 +1,7 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace QuotesApi.DTOs;
 
 public record LoginRequest(
-    string Email,
-    string Password);
+    [Required, EmailAddress] string Email,
+    [Required] string Password);
