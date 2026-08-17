@@ -12,7 +12,11 @@ is the write-up of what that script contains and the actual results of
 running it. Broader Day 7 narrative also lives in
 [`day-1/QuotesApi/day-7/README.md`](../day-1/QuotesApi/day-7/README.md),
 which documents the same exercise from inside the QuotesApi project
-folder.
+folder. The same script is also available directly in this folder, at
+[`joins-and-ctes.sql`](./joins-and-ctes.sql), alongside
+[`window-functions.sql`](./window-functions.sql) and
+[`set-operations.sql`](./set-operations.sql) — an exact copy, kept in
+sync with the original inside `QuotesApi`.
 
 > A second Day 7 topic, window functions, is documented further down this
 > page, in its own [Day 7 — Window functions](#day-7--window-functions)
