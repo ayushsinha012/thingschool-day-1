@@ -819,3 +819,346 @@ the required per-author running-count/day-gap exercise have all been
 implemented and executed successfully against the real Azure SQL
 database above, with every result shown in this section being the
 actual output of that run.
+
+---
+
+# Day 7 — Set operations from a spec
+
+> The exercise is translating a business question into the correct set
+> operator — `UNION`, `INTERSECT`, or `EXCEPT` — not just writing SQL that
+> happens to work.
+
+This section covers the third Day 7 SQL topic: set operations. The full,
+runnable script lives at [`set-operations.sql`](./set-operations.sql) in
+this same directory (schema additions, seed data, all three queries, and
+inline comments).
+
+This section builds on the same `Authors`/`Quotes` schema and seed data
+from the [joins-and-CTEs exercise](#day-7--joins-and-ctes-at-depth)
+above — no new `Authors` or `Quotes` rows, no in-memory or fabricated
+database. None of the three business questions below can be answered from
+the existing `Authors`/`Quotes` schema alone (there is no notion of a
+"tag" or a "classic"/"modern" set anywhere in it, and the real app's
+`Quote` model — `day-1/QuotesApi/Models/Quote.cs` — has no tag or category
+concept either), so `set-operations.sql` adds the smallest additional
+schema needed: a nullable `Quotes.Category` column (`'Classic'` /
+`'Modern'`), a `Tags` table (each tag also belongs to a `Category`), and a
+`QuoteTags` junction table for the many-to-many `Quote` ↔ `Tag`
+relationship. This does not touch the application's EF Core model,
+migrations, or the SQLite database the API actually runs on.
+
+## Azure SQL Database
+
+- **Resource group:** `thinkschool-rg`
+- **SQL logical server:** `thinkschool-day7-sql-0c0dda`
+  (`thinkschool-day7-sql-0c0dda.database.windows.net`)
+- **Database:** `thinkschool-day7` (Basic tier)
+- **Region:** Central India (`centralindia`)
+- **Subscription:** Azure for Students
+
+Same database as the joins-and-CTEs and window-functions exercises —
+connected with an Azure AD access token for the signed-in `az login`
+identity (`az account get-access-token --resource
+https://database.windows.net`), piped directly into a short-lived Node.js
+`mssql` client session and never written to disk. No SQL login, password,
+or connection string with credentials is stored in this repository or
+this document.
+
+**Every result in this section is genuine output from actually running
+`set-operations.sql` against `thinkschool-day7` on Azure SQL** — none of
+it is invented, approximated, or backfilled from another engine.
+
+## Schema (reused + extended)
+
+- **`Authors`** — `AuthorId` (PK), `Name`, `MentorAuthorId` (nullable,
+  self-referencing FK). Reused, unchanged.
+- **`Quotes`** — `QuoteId` (PK), `AuthorId` (FK), `QuoteText`,
+  `CreatedAt`, plus a new nullable **`Category`** column (`'Classic'` /
+  `'Modern'`) added by `set-operations.sql`.
+- **`Tags`** (new) — `TagId` (PK), `TagName`, `Category` (`'Classic'` /
+  `'Modern'`).
+- **`QuoteTags`** (new) — junction table, `(QuoteId, TagId)` composite PK,
+  FKs to `Quotes` and `Tags`.
+
+Seed data added by `set-operations.sql`, on top of the existing 6
+authors / 9 quotes:
+
+- `Quotes.Category`: Quotes 1, 3, 6, 7 → `'Classic'`; Quotes 2, 4, 5, 8, 9
+  → `'Modern'`. Two authors (Ava Thornton, Derek Osei) get a genuine mix
+  of both categories across their quotes, so Query 2 has a real,
+  non-forced answer.
+- `Tags`: `discipline` (Classic), `resilience` (Classic), `growth`
+  (Modern), `feedback` (Modern), `discipline` (Modern — a second, distinct
+  `TagId` row with the same name, seeded deliberately so Query 3's `UNION`
+  has a real duplicate to collapse).
+- `QuoteTags`: tags Ava Thornton's, Baxter Lin's, and Derek Osei's quotes
+  only — Cleo Marsh's quote (6) and Farid Haidari's quote (9) are left
+  untagged on purpose, so Query 1 has a real, non-empty answer.
+
+## Query 1 — Authors with quotes but no tags
+
+**Business question:** "Find authors who have quotes but have no
+associated tags."
+
+```sql
+SELECT a.AuthorId, a.Name
+FROM dbo.Authors AS a
+INNER JOIN dbo.Quotes AS q
+    ON q.AuthorId = a.AuthorId
+
+EXCEPT
+
+SELECT a.AuthorId, a.Name
+FROM dbo.Authors AS a
+INNER JOIN dbo.Quotes AS q
+    ON q.AuthorId = a.AuthorId
+INNER JOIN dbo.QuoteTags AS qt
+    ON qt.QuoteId = q.QuoteId
+
+ORDER BY Name;
+```
+
+### Result (actual)
+
+| AuthorId | Name |
+|---:|---|
+| 3 | Cleo Marsh |
+| 6 | Farid Haidari |
+
+### Why EXCEPT
+
+The requirement is literal set subtraction: start from "authors who have
+at least one quote," then remove "authors who have at least one *tagged*
+quote." `EXCEPT` returns exactly the left-side rows with no match on the
+right (by full row, after an implicit `DISTINCT`) — that is precisely "in
+A, not in B." `Elena Vranas` (zero quotes) correctly does not appear
+here — she was never in the left-hand set to begin with, since the
+question is about authors who *have* quotes.
+
+## Query 2 — Authors in both classic and modern
+
+**Business question:** "Find authors who have quotes in BOTH the
+'classic' and 'modern' sets."
+
+```sql
+SELECT a.AuthorId, a.Name
+FROM dbo.Authors AS a
+INNER JOIN dbo.Quotes AS q
+    ON q.AuthorId = a.AuthorId
+WHERE q.Category = 'Classic'
+
+INTERSECT
+
+SELECT a.AuthorId, a.Name
+FROM dbo.Authors AS a
+INNER JOIN dbo.Quotes AS q
+    ON q.AuthorId = a.AuthorId
+WHERE q.Category = 'Modern'
+
+ORDER BY Name;
+```
+
+### Result (actual)
+
+| AuthorId | Name |
+|---:|---|
+| 1 | Ava Thornton |
+| 4 | Derek Osei |
+
+### Why INTERSECT
+
+"BOTH" is exactly set intersection — the set of authors with a
+`Classic`-category quote, intersected with the set of authors with a
+`Modern`-category quote. `INTERSECT` returns only rows present in *both*
+input sets (by full row, after an implicit `DISTINCT`), matching "BOTH"
+directly. `Baxter Lin` and `Farid Haidari` (Modern-only) and `Cleo Marsh`
+(Classic-only) are correctly excluded — they appear in one set, not both.
+
+## Query 3 — Combined distinct tag list
+
+**Business question:** "Return the combined DISTINCT tag list across two
+categories."
+
+```sql
+SELECT TagName
+FROM dbo.Tags
+WHERE Category = 'Classic'
+
+UNION
+
+SELECT TagName
+FROM dbo.Tags
+WHERE Category = 'Modern'
+
+ORDER BY TagName;
+```
+
+### Result (actual)
+
+| TagName |
+|---|
+| discipline |
+| feedback |
+| growth |
+| resilience |
+
+### Why UNION
+
+The requirement explicitly says "DISTINCT," and `UNION` already
+de-duplicates by definition — it maps onto "combined distinct list" with
+no extra `DISTINCT` keyword needed. The seed data has a real duplicate to
+prove this isn't accidental: `discipline` was inserted twice (once under
+`Classic`, once under `Modern`, as two separate `Tags` rows), and the
+result above shows it exactly once. `UNION ALL` would have returned 5
+rows with `discipline` twice — the wrong answer to a question that asks
+for a *distinct* list.
+
+## Actual Execution / Validation Results
+
+Every statement in `set-operations.sql` (batch-separated by `GO`) was
+executed in one script run against the live `thinkschool-day7` Azure SQL
+Database, via a Node.js `mssql`/Tedious client authenticated with an
+Azure AD access token (`az account get-access-token --resource
+https://database.windows.net`), reusing the same `Authors`/`Quotes`
+schema and data created by the joins-and-CTEs exercise above. The run
+completed with exit code 0 and zero failed batches, and was re-run a
+second time end-to-end to confirm every statement is idempotent — both
+runs produced identical results:
+
+| Step | Status |
+|---|---|
+| Add `Quotes.Category` column (idempotent) | PASS |
+| Create `Tags` / `QuoteTags` tables | PASS |
+| Seed `Quotes.Category` values | PASS |
+| Seed `Tags` rows | PASS |
+| Seed `QuoteTags` rows | PASS |
+| Query 1 — Authors with quotes but no tags (`EXCEPT`) | PASS |
+| Query 2 — Authors in both classic and modern (`INTERSECT`) | PASS |
+| Query 3 — Combined distinct tag list (`UNION`) | PASS |
+
+- Query 1 returned 2 rows (`Cleo Marsh`, `Farid Haidari`) — the two
+  authors whose only quotes were deliberately left untagged in the seed
+  data. Not a zero-row result; documented as the genuine output.
+- Query 2 returned 2 rows (`Ava Thornton`, `Derek Osei`) — the two authors
+  seeded with a real mix of `Classic` and `Modern` quotes.
+- Query 3 returned 4 rows, with the deliberately duplicated `discipline`
+  tag collapsed to one row — confirming `UNION`'s `DISTINCT` behavior
+  against real duplicate data, not an assumption.
+
+## Exercise
+
+Paste the three queries and their results, and note which set operator
+you used for each and why.
+
+### Query 1 — Authors with quotes but no tags
+
+```sql
+SELECT a.AuthorId, a.Name
+FROM dbo.Authors AS a
+INNER JOIN dbo.Quotes AS q
+    ON q.AuthorId = a.AuthorId
+
+EXCEPT
+
+SELECT a.AuthorId, a.Name
+FROM dbo.Authors AS a
+INNER JOIN dbo.Quotes AS q
+    ON q.AuthorId = a.AuthorId
+INNER JOIN dbo.QuoteTags AS qt
+    ON qt.QuoteId = q.QuoteId
+
+ORDER BY Name;
+```
+
+**Result (actual):**
+
+| AuthorId | Name |
+|---:|---|
+| 3 | Cleo Marsh |
+| 6 | Farid Haidari |
+
+**Operator used:** `EXCEPT`, because the question is set subtraction —
+"has a quote" minus "has a tagged quote."
+
+### Query 2 — Authors in both classic and modern
+
+```sql
+SELECT a.AuthorId, a.Name
+FROM dbo.Authors AS a
+INNER JOIN dbo.Quotes AS q
+    ON q.AuthorId = a.AuthorId
+WHERE q.Category = 'Classic'
+
+INTERSECT
+
+SELECT a.AuthorId, a.Name
+FROM dbo.Authors AS a
+INNER JOIN dbo.Quotes AS q
+    ON q.AuthorId = a.AuthorId
+WHERE q.Category = 'Modern'
+
+ORDER BY Name;
+```
+
+**Result (actual):**
+
+| AuthorId | Name |
+|---:|---|
+| 1 | Ava Thornton |
+| 4 | Derek Osei |
+
+**Operator used:** `INTERSECT`, because the question asks for membership
+in "BOTH" sets — exactly what set intersection means.
+
+### Query 3 — Combined distinct tag list
+
+```sql
+SELECT TagName
+FROM dbo.Tags
+WHERE Category = 'Classic'
+
+UNION
+
+SELECT TagName
+FROM dbo.Tags
+WHERE Category = 'Modern'
+
+ORDER BY TagName;
+```
+
+**Result (actual):**
+
+| TagName |
+|---|
+| discipline |
+| feedback |
+| growth |
+| resilience |
+
+**Operator used:** `UNION`, because the question asks for a "combined
+DISTINCT" list, and `UNION` de-duplicates by definition — confirmed
+against the real, deliberately-seeded `discipline` duplicate.
+
+### Why each operator fits
+
+- **`EXCEPT`** for Query 1 — the requirement is "have X, but not Y," which
+  is set subtraction: start from the set of authors with a quote, then
+  remove every author who also appears in the set of authors with a
+  tagged quote. Anything left over is, by definition, "has a quote but no
+  tag."
+- **`INTERSECT`** for Query 2 — the requirement is "in both X and Y,"
+  which is set intersection: the set of Classic-quote authors overlapped
+  with the set of Modern-quote authors. Only names present in both survive.
+- **`UNION`** for Query 3 — the requirement is "combined, distinct," which
+  is exactly what `UNION` computes: stack both result sets and remove
+  duplicates. `UNION ALL` would have kept the seeded `discipline`
+  duplicate, which fails the "distinct" requirement.
+
+## Remaining Day 7 Tasks
+
+None. All three set-operations business questions — authors with quotes
+but no tags (`EXCEPT`), authors in both the classic and modern sets
+(`INTERSECT`), and the combined distinct tag list (`UNION`) — have been
+implemented and executed successfully against the real Azure SQL
+database above, with every result shown in this section being the actual
+output of that run.
