@@ -306,3 +306,242 @@ WITHIN GROUP` calls with different orderings in one `GROUP BY` scope is
 rejected by SQL Server (error 8711; restructured with `OUTER APPLY`).
 The version of `Task 1.sql` in this folder has both fixes and its final
 run completed with zero errors.
+
+---
+
+# Day 8 — Covering indexes + included columns
+
+> "A covering index serves a query entirely from the index, avoiding the
+> key lookup. A query should initially perform a key lookup, then a
+> covering index should be created using INCLUDE columns to eliminate
+> the lookup."
+
+The full, runnable script lives at
+[`covering-indexes-included-columns.sql`](./covering-indexes-included-columns.sql)
+in this same folder. This section is the write-up of what that script
+contains and the actual results of running it against Azure SQL. Nothing
+below is invented — the logical-reads numbers and the plan operators
+were read directly from `SET STATISTICS IO` output and the actual
+execution-plan XML (`SET STATISTICS XML ON`) captured while executing
+the script.
+
+## Objective
+
+This exercise demonstrates, with a real before/after measurement rather
+than theory, how a covering index eliminates a Key Lookup: a
+non-clustered index is created whose key covers a query's `WHERE`
+clause but not its `SELECT` list, the actual execution plan is captured
+and confirmed to contain a Key Lookup, `INCLUDE` columns are then added
+to the same index, and the identical query is re-run to confirm — from
+the plan itself, not assumed — that the Key Lookup is gone and to
+measure the resulting logical-reads delta.
+
+## Azure SQL Database
+
+Same database as Task 1 — reused, not re-provisioned:
+
+- **Database:** `thinkschool-day7`
+- **Resource group:** `thinkschool-rg`
+- **Region:** Central India (`centralindia`)
+
+Connected using an Azure AD access token for the signed-in `az login`
+identity, same as Task 1 — no SQL login, password, or connection string
+with credentials is stored anywhere in this repository.
+
+## Exercise
+
+> "Paste the before plan (showing the key lookup), the index with
+> INCLUDE, the after plan (lookup gone), and the logical-reads delta."
+
+## Dataset
+
+- **Table:** `dbo.OrderActivity` — reused directly from Day 8 Task 1, no
+  new table or data generation for this task.
+- **Rows:** 104,000 (confirmed by `COUNT(*)` at the start of this
+  script — unchanged from where Task 1 left the table; this task inserts
+  no new rows).
+- **Relevant columns:**
+  - `CustomerId` — 1..5000, ~20 orders per customer.
+  - `Status` — 6 values (`Pending`, `Processing`, `Shipped`,
+    `Delivered`, `Cancelled`, `Returned`).
+  - `OrderDate`, `Amount`, `Notes` — payload columns selected by the
+    query below but deliberately left out of the non-covering index's
+    key, so they must be fetched separately the first time.
+- **Why this table/query is appropriate:** `CustomerId = 2500` has 20
+  total orders, split 7 `Delivered` / 6 `Processing` / 7 `Returned`
+  (confirmed by `GROUP BY` before the experiment). Filtering on
+  `CustomerId = 2500 AND Status = 'Delivered'` targets a selective,
+  7-row slice — small enough that the optimizer genuinely prefers an
+  Index Seek + Key Lookup plan over a scan, which is what makes the
+  "before" half of this experiment real rather than contrived. Using
+  this existing table means the only new object needed is one
+  dedicated index scoped to this experiment
+  (`IX_OrderActivity_CustomerId_Status`); Task 1's three indexes
+  (`CIX_OrderActivity_OrderDate`, `IX_OrderActivity_CustomerId`,
+  `IX_OrderActivity_Status_OrderDate`) are never touched, confirmed
+  unchanged in the final index inventory (§7 below).
+
+## 1. Before — Non-Covering Index
+
+**Index definition:**
+
+```sql
+CREATE NONCLUSTERED INDEX IX_OrderActivity_CustomerId_Status
+    ON dbo.OrderActivity (CustomerId, Status);
+```
+
+**Query** (unchanged before and after):
+
+```sql
+SELECT CustomerId, Status, OrderDate, Amount, Notes
+FROM dbo.OrderActivity
+WHERE CustomerId = 2500 AND Status = 'Delivered';
+```
+
+**Why the index does not cover the query:** the index key is
+`(CustomerId, Status)`, so it fully satisfies the `WHERE` clause, but
+the `SELECT` list also asks for `OrderDate`, `Amount`, and `Notes` —
+none of which are in the index (no `INCLUDE`). SQL Server can find the
+right rows from the index alone but must go back to the table's
+clustered index (`CIX_OrderActivity_OrderDate`) to fetch those three
+columns for every matching row.
+
+**Actual `STATISTICS IO` output:**
+
+```
+Table '[dbo].[OrderActivity]'. Scan count 1, logical reads 24, physical reads 0, ...
+```
+
+**Actual logical reads: 24.**
+
+## 2. Before Execution Plan
+
+Captured with `SET STATISTICS XML ON` in the same batch as the query
+(so the actual, not estimated, plan is what's reported here). The
+`RelOp`/`PhysicalOp` chain read directly from that plan XML:
+
+```
+Nested Loops
+ ├─ Index Seek           on IX_OrderActivity_CustomerId_Status   (ActualRows=7, ActualLogicalReads=3)
+ └─ Clustered Index Seek on CIX_OrderActivity_OrderDate          (ActualRows=7, ActualExecutions=7, ActualLogicalReads=21)
+                                                                   IndexScan Lookup="1"
+```
+
+**The actual plan confirms a Key Lookup is present.** `Lookup="1"` on
+the `Clustered Index Seek` operator is SQL Server's actual-plan XML
+representation of a Key Lookup (SSMS renders this same operator as "Key
+Lookup (Clustered)"). It ran once per matching row — `ActualExecutions
+= 7` for the 7 rows returned — which is exactly why the read cost is
+higher than the seek alone: `24 = 3 (seek into
+IX_OrderActivity_CustomerId_Status) + 21 (7 separate single-row
+lookups into CIX_OrderActivity_OrderDate)`. SQL Server had to perform
+this lookup because `OrderDate`, `Amount`, and `Notes` exist only in
+the clustered index's leaf rows, not in the non-covering index being
+sought.
+
+## 3. Covering Index with INCLUDE
+
+Real `CREATE INDEX` statement used (same key and index name as §1;
+`WITH (DROP_EXISTING = ON)` turns it into a covering index in place
+rather than creating a second, redundant index):
+
+```sql
+CREATE NONCLUSTERED INDEX IX_OrderActivity_CustomerId_Status
+ON dbo.OrderActivity
+(
+    CustomerId,
+    Status
+)
+INCLUDE
+(
+    OrderDate,
+    Amount,
+    Notes
+)
+WITH (DROP_EXISTING = ON);
+```
+
+`OrderDate`, `Amount`, and `Notes` are exactly the three columns the
+query in §1 needed beyond the key — nothing extra was included.
+
+## 4. After — Same Query, Covering Index
+
+Same query as §1, run again unchanged after the index in §3 was
+created:
+
+```sql
+SELECT CustomerId, Status, OrderDate, Amount, Notes
+FROM dbo.OrderActivity
+WHERE CustomerId = 2500 AND Status = 'Delivered';
+```
+
+**Actual `STATISTICS IO` output:**
+
+```
+Table '[dbo].[OrderActivity]'. Scan count 1, logical reads 4, physical reads 0, ...
+```
+
+**Actual logical reads: 4.**
+
+## 5. After Execution Plan
+
+Captured the same way as §2 (`SET STATISTICS XML ON` in the same batch
+as the query):
+
+```
+Index Seek on IX_OrderActivity_CustomerId_Status only   (ActualRows=7, ActualLogicalReads=4)
+```
+
+**The Key Lookup is gone.** `CIX_OrderActivity_OrderDate` does not
+appear anywhere in this plan at all — not merely an absent `Lookup="1"`
+flag, the clustered index is never referenced. The single `Index Seek`
+on the now-covering `IX_OrderActivity_CustomerId_Status` returns all
+five selected columns directly from its own B-tree. The same 7 rows
+come back, with identical `OrderDate`/`Amount`/`Notes` values, confirmed
+by comparing both result sets row for row.
+
+## 6. Logical Reads Comparison
+
+| | Before (non-covering) | After (covering) |
+|---|---|---|
+| Physical operators | Nested Loops → Index Seek → Clustered Index Seek | Index Seek (single operator) |
+| Objects touched | `IX_OrderActivity_CustomerId_Status` **and** `CIX_OrderActivity_OrderDate` | `IX_OrderActivity_CustomerId_Status` only |
+| Key Lookup present | **YES** (`IndexScan Lookup="1"`, 7 executions) | **NO** |
+| Logical reads | **24** | **4** |
+
+**Logical-reads delta: 24 → 4 — 20 fewer logical reads, an 83%
+reduction (~6×), for the identical 7-row result.**
+
+## 7. Final Validation
+
+Final index inventory on `dbo.OrderActivity`, read from `sys.indexes` /
+`sys.index_columns` after the experiment — confirming Task 1's three
+indexes are untouched and this task's index now carries the `INCLUDE`:
+
+| IndexName | IndexType | KeyColumns | IncludedCols |
+|---|---|---|---|
+| `CIX_OrderActivity_OrderDate` | CLUSTERED | `OrderDate` | *(none)* |
+| `IX_OrderActivity_CustomerId` | NONCLUSTERED | `CustomerId` | `Amount` |
+| `IX_OrderActivity_CustomerId_Status` | NONCLUSTERED | `CustomerId, Status` | `Amount, Notes, OrderDate` |
+| `IX_OrderActivity_Status_OrderDate` | NONCLUSTERED | `Status, OrderDate` | `Amount` |
+
+| Check | Result |
+|---|---|
+| Azure SQL execution | PASS |
+| Table/data verified | PASS (104,000 rows, unchanged from Task 1) |
+| Baseline query executed | PASS |
+| Baseline plan shows Key Lookup | PASS (`IndexScan Lookup="1"` on `CIX_OrderActivity_OrderDate`) |
+| Baseline logical reads captured | PASS (24, via `SET STATISTICS IO ON`) |
+| Non-covering index definition shown | PASS (§1, read from `sys.indexes`/`sys.index_columns`) |
+| Covering index created | PASS (`INCLUDE (OrderDate, Amount, Notes)`, confirmed in catalog) |
+| After query executed (same query) | PASS |
+| After plan inspected | PASS |
+| Key Lookup confirmed gone | PASS (`CIX_OrderActivity_OrderDate` absent from the plan entirely) |
+| After logical reads captured | PASS (4, via `SET STATISTICS IO ON`) |
+| Before/after logical reads compared | PASS (24 → 4, §6 above) |
+| Task 1's indexes left unmodified | PASS (confirmed in final inventory above) |
+
+Day 8 Task 2 is complete; no remaining implementation work. This script
+was executed twice end-to-end against the live database while writing
+this section — both runs reproduced the same 24 → 4 logical-reads
+result and the same Key-Lookup-present → Key-Lookup-absent plan shift.
