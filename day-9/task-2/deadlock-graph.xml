@@ -1,0 +1,27 @@
+<deadlock><victim-list><victimProcess id="process21b40626c58"/></victim-list><process-list><process id="process21b40626c58" taskpriority="0" logused="296" waitresource="XACT: 5:15780:0 KEY: 5:72057594050117632 (8194443284a0)" waittime="3697" ownerId="1854668" transactionname="user_transaction" lasttranstarted="2026-08-19T04:53:59.110" XDES="0x21b421c0480" lockMode="S" schedulerid="2" kpid="35036" status="suspended" spid="89" sbid="0" ecid="0" priority="0" trancount="2" lastbatchstarted="2026-08-19T04:53:59.110" lastbatchcompleted="2026-08-19T04:53:59.110" lastattention="1900-01-01T00:00:00.110" clientapp="sqlcmd" hostname="kali" hostpid="[redacted]" loginname="[redacted]" isolationlevel="read committed (2)" xactid="1854668" currentdb="5" currentdbname="thinkschool-day7" lockTimeout="4294967295" clientoption1="673185824" clientoption2="128056"><executionStack><frame procname="unknown" queryhash="0xea5d6f39a3310326" queryplanhash="0xf9cc4f61c8d8d49a" line="8" stmtstart="38" stmtend="170" sqlhandle="0x0200000011ec4f1cd8b8494f854cf827eda7b3cf76d1298e0000000000000000000000000000000000000000">
+unknown    </frame><frame procname="unknown" queryhash="0xea5d6f39a3310326" queryplanhash="0xf9cc4f61c8d8d49a" line="8" stmtstart="628" stmtend="742" sqlhandle="0x02000000ead31e072cb87a2cf593fc68e61ee800a757a7900000000000000000000000000000000000000000">
+unknown    </frame></executionStack><inputbuf>
+SET NOCOUNT ON;
+PRINT 'S2: start ' + CONVERT(VARCHAR, SYSDATETIME(), 121);
+BEGIN TRANSACTION;
+UPDATE dbo.DeadlockDemo SET Value = Value + 1 WHERE Id = 2;
+PRINT 'S2: locked Id=2 ' + CONVERT(VARCHAR, SYSDATETIME(), 121);
+WAITFOR DELAY '00:00:05';
+PRINT 'S2: attempting Id=1 ' + CONVERT(VARCHAR, SYSDATETIME(), 121);
+UPDATE dbo.DeadlockDemo SET Value = Value + 1 WHERE Id = 1;
+PRINT 'S2: locked Id=1 ' + CONVERT(VARCHAR, SYSDATETIME(), 121);
+COMMIT TRANSACTION;
+PRINT 'S2: committed ' + CONVERT(VARCHAR, SYSDATETIME(), 121);   </inputbuf></process><process id="process21b47f0c478" taskpriority="0" logused="400" waitresource="XACT: 5:15781:0 KEY: 5:72057594050117632 (61a06abd401c)" waittime="3792" ownerId="1854656" transactionname="user_transaction" lasttranstarted="2026-08-19T04:53:59.013" XDES="0x21b42194480" lockMode="S" schedulerid="2" kpid="139880" status="suspended" spid="87" sbid="0" ecid="0" priority="0" trancount="2" lastbatchstarted="2026-08-19T04:53:59.003" lastbatchcompleted="2026-08-19T04:53:59.007" lastattention="1900-01-01T00:00:00.007" clientapp="sqlcmd" hostname="kali" hostpid="[redacted]" loginname="[redacted]" isolationlevel="read committed (2)" xactid="1854656" currentdb="5" currentdbname="thinkschool-day7" lockTimeout="4294967295" clientoption1="673185824" clientoption2="128056"><executionStack><frame procname="unknown" queryhash="0xea5d6f39a3310326" queryplanhash="0xf9cc4f61c8d8d49a" line="8" stmtstart="38" stmtend="170" sqlhandle="0x0200000011ec4f1cd8b8494f854cf827eda7b3cf76d1298e0000000000000000000000000000000000000000">
+unknown    </frame><frame procname="unknown" queryhash="0xea5d6f39a3310326" queryplanhash="0xf9cc4f61c8d8d49a" line="8" stmtstart="628" stmtend="742" sqlhandle="0x02000000ca161914a6c04f3c02d9704dd7a5c8cdafdf69e50000000000000000000000000000000000000000">
+unknown    </frame></executionStack><inputbuf>
+SET NOCOUNT ON;
+PRINT 'S1: start ' + CONVERT(VARCHAR, SYSDATETIME(), 121);
+BEGIN TRANSACTION;
+UPDATE dbo.DeadlockDemo SET Value = Value + 1 WHERE Id = 1;
+PRINT 'S1: locked Id=1 ' + CONVERT(VARCHAR, SYSDATETIME(), 121);
+WAITFOR DELAY '00:00:05';
+PRINT 'S1: attempting Id=2 ' + CONVERT(VARCHAR, SYSDATETIME(), 121);
+UPDATE dbo.DeadlockDemo SET Value = Value + 1 WHERE Id = 2;
+PRINT 'S1: locked Id=2 ' + CONVERT(VARCHAR, SYSDATETIME(), 121);
+COMMIT TRANSACTION;
+PRINT 'S1: committed ' + CONVERT(VARCHAR, SYSDATETIME(), 121);   </inputbuf></process></process-list><resource-list><xactlock xdesIdLow="15780" xdesIdHigh="0" dbid="5" id="lock21b4cb04380" mode="X"><UnderlyingResource><keylock hobtid="72057594050117632" dbid="5" objectname="432f29ae-893e-4f8b-82be-581f0cac4d88.dbo.DeadlockDemo" indexname="PK__Deadlock__3214EC078929E568"/></UnderlyingResource><owner-list><owner id="process21b47f0c478" mode="X"/></owner-list><waiter-list><waiter id="process21b40626c58" mode="S" requestType="wait"/></waiter-list></xactlock><xactlock xdesIdLow="15781" xdesIdHigh="0" dbid="5" id="lock21b48db1f80" mode="X"><UnderlyingResource><keylock hobtid="72057594050117632" dbid="5" objectname="432f29ae-893e-4f8b-82be-581f0cac4d88.dbo.DeadlockDemo" indexname="PK__Deadlock__3214EC078929E568"/></UnderlyingResource><owner-list><owner id="process21b40626c58" mode="X"/></owner-list><waiter-list><waiter id="process21b47f0c478" mode="S" requestType="wait"/></waiter-list></xactlock></resource-list></deadlock>
