@@ -258,8 +258,3 @@ attached to it.
 | 10,000-row measurement | **PASS** — 5 timed iterations per mode after a warm-up iteration; real measured time and allocation numbers recorded above, not estimated |
 | Final comparison | **PASS** — on this run, `AsNoTracking()` measured faster (39.40 ms vs 78.00 ms avg) and lower-allocating (4,332,030 vs 9,895,096 bytes/run) than tracking on the same 10,000-row read |
 | Raw output | **PASS** — full unedited console output from this run is saved in [`results.md`](./results.md) and matches the numbers in this README |
-
-## Remaining Day 10 Work
-
-Day 10 Task 1 is complete. Any further Day 10 tasks beyond Task 1 have
-not been started and are not covered by this README.
