@@ -240,8 +240,3 @@ including the `dotnet run` timestamps — is in
 | Client-side evaluation demo | **PASS** — the accidental query fetched all 200 rows with no `WHERE` clause, confirmed by the logged SQL and the printed row counts |
 | Fix validation | **PASS** — the translated query's logged SQL includes `WHERE "q"."Author" = 'Seneca'` and returned 25 rows directly from the database |
 | Raw output | **PASS** — full console output from this run is saved in [`results.md`](./results.md) and matches the SQL and counts in this README |
-
-## Remaining Day 10 Work
-
-Day 10 Task 1 and Task 2 are complete. Any further Day 10 tasks beyond
-these two have not been started and are not covered by this README.
