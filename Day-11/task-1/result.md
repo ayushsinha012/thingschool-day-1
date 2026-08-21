@@ -1,5 +1,8 @@
 # Exercise
 
+Paste the baseline p50/p99, the offending SQL, and the plan. State the two
+biggest problems you found.
+
 ## Baseline p50/p99
 
 Environment note: the installed system `dotnet` (via `/usr/bin/dotnet`) is
@@ -19,7 +22,7 @@ Setup used for the measurement:
 
 - Build: `~/.dotnet/dotnet build -c Release` (Release configuration, target `net10.0`)
 - Run: `bin/Release/net10.0/linux-x64/QuotesApi.dll`, `ASPNETCORE_ENVIRONMENT=Production`, listening on `http://localhost:5099`
-- Data: `quotes.db` seeded with 9,000 synthetic quotes spread across 300 distinct synthetic authors (30 quotes/author, all `IsDeleted = 0`), via a direct SQLite insert script (no real quote content, no production data)
+- Data: `quotes.db` seeded with 9,000 synthetic quotes spread across 300 distinct synthetic authors (30 quotes/author, all `IsDeleted = 0`), via `seed-performance-data.sh` in this directory (no real quote content, no production data)
 - Machine: 4 logical CPUs, Linux 6.6.9-amd64 (Kali), local disk SQLite, single instance, no other load on the box
 - EF Core SQL command logging was **off** during the load test (Production log level, `Warning` for `Microsoft.EntityFrameworkCore.Database.Command`) so logging overhead doesn't skew the latency numbers; SQL was captured separately (see below) from the same build/data with logging turned on for a single request
 
@@ -55,7 +58,7 @@ Percentage of the requests served within a certain time (ms)
 
 ## Offending SQL
 
-Captured with EF Core command logging enabled
+Also saved as `queries.sql` in this directory. Captured with EF Core command logging enabled
 (`Serilog:MinimumLevel:Override:Microsoft.EntityFrameworkCore.Database.Command=Information`)
 for one request to `authors=50` against the same database used for the
 load test. The request produced exactly **51** `Executed DbCommand` log
@@ -85,7 +88,8 @@ WHERE NOT ("q"."IsDeleted") AND "q"."Author" = @author
 
 ## Execution plan
 
-Captured with `sqlite3 quotes.db 'EXPLAIN QUERY PLAN ...'` against the same
+Also saved as `execution-plan.txt` in this directory (re-verified live on
+2026-08-21 against the same schema/data). Captured with `sqlite3 quotes.db 'EXPLAIN QUERY PLAN ...'` against the same
 database used for the load test, using an author value taken from the
 captured SQL log above (`'Synthetic Author 0001'`).
 
@@ -166,6 +170,13 @@ instead of installing anything new. No production code was changed to
 produce this baseline — the endpoint was exercised as implemented, with
 9,000 synthetic quotes seeded directly into SQLite (no real content) purely
 as load-test fixture data.
+
+`seed-performance-data.sh` and `load-test.sh` (both in this directory)
+reproduce this setup and were re-verified working end-to-end on 2026-08-21
+(seed idempotency, endpoint smoke request, and `load-test.sh`'s `ab`
+fallback path). That verification run is a script smoke test, not a new
+baseline capture, so the p50/p99 figures above are left as originally
+measured rather than replaced.
 
 ## What did you learn this session?
 
