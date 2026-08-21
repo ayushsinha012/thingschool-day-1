@@ -1,0 +1,36 @@
+Before state, carried over from Day-11/task-1/execution-plan.txt (Task 1's
+baseline measurement) -- reproduced here so Task 2's before/after comparison
+is readable without cross-referencing another task's folder. Original
+capture: sqlite3 against day-1/QuotesApi/quotes.db (9,000 rows, 300 distinct
+authors), same database used for the Task 2 measurement in this directory.
+
+$ sqlite3 quotes.db "EXPLAIN QUERY PLAN SELECT \"q\".\"Id\", \"q\".\"Author\", \"q\".\"IsDeleted\", \"q\".\"Text\" FROM \"Quotes\" AS \"q\" WHERE NOT (\"q\".\"IsDeleted\") AND \"q\".\"Author\" = 'Synthetic Author 0001';"
+QUERY PLAN
+`--SCAN q
+
+SCAN q = a full table scan. There is no index that can satisfy
+WHERE Author = @author, so this repeats once per author returned
+(50 times for the default authors=50 request), each scanning the
+full table.
+
+$ sqlite3 quotes.db "EXPLAIN QUERY PLAN SELECT q0.Author FROM (SELECT DISTINCT q.Author FROM Quotes AS q WHERE NOT (q.IsDeleted)) AS q0 ORDER BY q0.Author LIMIT 50;"
+QUERY PLAN
+|--CO-ROUTINE q0
+|  |--SCAN q
+|  `--USE TEMP B-TREE FOR DISTINCT
+|--SCAN q0
+`--USE TEMP B-TREE FOR ORDER BY
+
+(Distinct-author query, shown for reference -- it only runs once per
+request, so it is not the primary offender.)
+
+$ sqlite3 quotes.db "SELECT name, sql FROM sqlite_master WHERE tbl_name='Quotes';"
+Quotes|CREATE TABLE "Quotes" (
+    "Id" INTEGER NOT NULL CONSTRAINT "PK_Quotes" PRIMARY KEY AUTOINCREMENT,
+    "Author" TEXT NOT NULL,
+    "Text" TEXT NOT NULL
+, "IsDeleted" INTEGER NOT NULL DEFAULT 0)
+
+Only the CREATE TABLE statement is present -- no CREATE INDEX row exists
+for Quotes, confirming Author (and IsDeleted) are unindexed in both the
+EF Core model (AppDbContext.OnModelCreating) and the applied migrations.

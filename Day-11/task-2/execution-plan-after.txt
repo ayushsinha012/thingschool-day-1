@@ -1,0 +1,34 @@
+Captured with: sqlite3 quotes.db 'EXPLAIN QUERY PLAN ...' against the same
+quotes.db used for the load test (9,000 rows / 300 authors, IX_Quotes_Author
+index present via migration 20260821084006_AddQuoteAuthorIndex /
+20260821084115_AddQuoteAuthorIndex).
+
+Query plan for the single merged query in queries-after.sql (authors=50):
+
+QUERY PLAN
+|--SEARCH q USING INDEX IX_Quotes_Author (Author=?)
+`--LIST SUBQUERY 2
+   |--CO-ROUTINE (subquery-1)
+   |  `--SCAN Quotes USING INDEX IX_Quotes_Author
+   `--SCAN (subquery-1)
+
+Reading this plan:
+- "SEARCH q USING INDEX IX_Quotes_Author (Author=?)" - the outer query does
+  an indexed point lookup per author, not a table scan. This replaces the
+  Task 1 baseline's "SCAN q" (full table scan) repeated once per author.
+- "CO-ROUTINE (subquery-1) ... SCAN Quotes USING INDEX IX_Quotes_Author" -
+  the distinct-author subquery walks the Author index in sorted order
+  (already sorted -> no separate "USE TEMP B-TREE FOR ORDER BY", no
+  "USE TEMP B-TREE FOR DISTINCT" the way the Task 1 baseline's equivalent
+  query needed).
+- No "SCAN q" (full-table, no index) appears anywhere in this plan -
+  confirms the missing-index problem from Task 1 is resolved for this
+  query shape.
+
+For reference, the baseline per-author query plan from Task 1 (queries.sql /
+execution-plan.txt in ../task-1) was:
+
+QUERY PLAN
+`--SCAN q
+
+i.e. a full table scan, repeated 50 times (once per author) per request.

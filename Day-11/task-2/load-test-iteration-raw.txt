@@ -1,0 +1,106 @@
+Raw ab output from the three optimization steps tried, in order, all run as
+`ab -n 300 -c 10 'http://localhost:5099/api/quotes/performance/author-quotes?authors=50'`
+against the same quotes.db (9,000 rows / 300 authors), same machine, same
+Release build, same ASPNETCORE_ENVIRONMENT=Production, 0 failed requests
+each time. See result.md for interpretation. load-test-after-raw.txt holds
+the final run used as the reported after-optimization result.
+
+=== Run 1: N+1 fixed + IX_Quotes_Author index added (still 2 queries/request:
+    fetch author names, then fetch their quotes with WHERE Author IN (...)) ===
+
+Concurrency Level:      10
+Time taken for tests:   2.122 seconds
+Complete requests:      300
+Failed requests:        0
+Total transferred:      45399900 bytes
+HTML transferred:       45358200 bytes
+Requests per second:    141.37 [#/sec] (mean)
+Time per request:       70.738 [ms] (mean)
+Time per request:       7.074 [ms] (mean, across all concurrent requests)
+Transfer rate:          20891.94 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.2      0       3
+Processing:    15   67  26.7     62     194
+Waiting:       12   46  20.9     42     131
+Total:         15   67  26.7     62     194
+
+Percentage of the requests served within a certain time (ms)
+  50%     62
+  66%     71
+  75%     79
+  80%     84
+  90%     98
+  95%    125
+  98%    152
+  99%    166
+ 100%    194 (longest request)
+
+=== Run 2: merged into 1 query/request (subquery IN) + projection narrowed
+    to {Author, Text} instead of the full Quote entity ===
+
+Concurrency Level:      10
+Time taken for tests:   1.655 seconds
+Complete requests:      300
+Failed requests:        0
+Total transferred:      13449900 bytes
+HTML transferred:       13408200 bytes
+Requests per second:    181.24 [#/sec] (mean)
+Time per request:       55.175 [ms] (mean)
+Time per request:       5.518 [ms] (mean, across all concurrent requests)
+Transfer rate:          7935.09 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.6      0       5
+Processing:    13   51  25.9     47     194
+Waiting:       12   51  26.0     47     194
+Total:         13   51  25.9     48     194
+
+Percentage of the requests served within a certain time (ms)
+  50%     48
+  66%     57
+  75%     64
+  80%     68
+  90%     79
+  95%    100
+  98%    136
+  99%    141
+ 100%    194 (longest request)
+
+=== Run 3: also raised ThreadPool.SetMinThreads before WebApplication.CreateBuilder,
+    to test whether thread-pool injection lag explained the remaining tail latency ===
+
+Concurrency Level:      10
+Time taken for tests:   1.589 seconds
+Complete requests:      300
+Failed requests:        0
+Total transferred:      13449900 bytes
+HTML transferred:       13408200 bytes
+Requests per second:    188.86 [#/sec] (mean)
+Time per request:       52.951 [ms] (mean)
+Time per request:       5.295 [ms] (mean, across all concurrent requests)
+Transfer rate:          8268.51 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.9      0      10
+Processing:    13   49  26.2     45     170
+Waiting:        5   46  25.3     42     170
+Total:         13   49  26.1     45     170
+
+Percentage of the requests served within a certain time (ms)
+  50%     45
+  66%     56
+  75%     61
+  80%     66
+  90%     84
+  95%    100
+  98%    123
+  99%    139
+ 100%    170 (longest request)
+
+Run 2 -> Run 3 p99 barely moved (141ms -> 139ms), which is the evidence that
+thread-pool injection lag was not the actual bottleneck. See result.md,
+"Two performance observations".
