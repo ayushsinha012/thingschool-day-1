@@ -86,13 +86,18 @@ Make one request and copy the `Executed DbCommand` entries for the endpoint
 into `queries.sql`/`result.md`. There should be one distinct-author command
 and one author-filtered command per returned author.
 
-With the API running, capture latency with `load-test.sh` (uses bombardier
-or k6 if installed, otherwise falls back to `ab`):
+With the API running, capture latency with `load-test.sh`. It prefers
+`bombardier`, then `k6`, and falls back to Apache Bench (`ab`) if neither is
+installed:
 
 ```bash
 cd Day-11/task-1
 ./load-test.sh 'http://localhost:5000/api/quotes/performance/author-quotes?authors=50' 10 30s
 ```
+
+On the machine used for the recorded baseline, neither `bombardier` nor `k6`
+was installed and there was no passwordless package-install access, so the
+script's `ab` fallback is what actually produced the numbers in `result.md`.
 
 Record its p50 and p99 output in `result.md`. Keep the data volume, URL,
 concurrency, duration, machine, and build configuration with the result so it
@@ -110,7 +115,7 @@ Replace `AUTHOR_FROM_LOG` with the captured value, then paste the output into
 `execution-plan.txt`/`result.md`. The plan should be captured from the same
 database state used for the load test.
 
-# Exercise
+## Exercise
 
 Paste the baseline p50/p99, the offending SQL, and the plan. State the two
 biggest problems you found.
@@ -124,19 +129,16 @@ the two biggest problems identified.
 
 ## Notes for mentor
 
-This endpoint was profiled against the API's existing SQLite database
-(local dev configuration) rather than the SQL Server/Testcontainers stack,
-which backs integration tests only and was left untouched. No production
-behavior was changed; the endpoint is additive.
+The baseline was captured against the API's existing SQLite dev database, not
+the SQL Server/Testcontainers stack used by integration tests, and `ab` stood
+in for bombardier/k6 since neither was installed on the machine. No production
+behavior was changed; the endpoint is additive and the missing index was left
+in place on purpose so it could be profiled.
 
 ## What did you learn this session?
 
-That an N+1 pattern and a missing index compound each other rather than
-just adding: see `result.md` for the full reasoning from the captured
-evidence.
+An N+1 query pattern and a missing index on `Author` don't just add to each other, they compound, so 50 per-author queries end up as 50 full table scans instead of 50 cheap indexed lookups.
 
 ## What would break this?
 
-Growing the `Quotes` table or the requested `authors` count makes both the
-round-trip count and the per-query table scan cost worse at the same time.
-See `result.md` for details.
+Larger data volume or a larger requested author count increases both the number of database round trips and the cost of the repeated scans.
