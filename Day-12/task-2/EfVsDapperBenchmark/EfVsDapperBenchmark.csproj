@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Dapper is the only package this task adds. Microsoft.Data.Sqlite
+         and EF Core already come in transitively through the QuotesApi
+         project reference below, so this is the sole new dependency
+         introduced for the EF Core vs Dapper comparison. -->
+    <PackageReference Include="Dapper" Version="2.1.66" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Reused, not duplicated: AppDbContext, the Quote model, and the
+         existing GetQuoteByIdQuery/GetQuoteByIdQueryHandler CQRS read
+         side from Day 12 Task 1 are called directly from here instead of
+         being reimplemented. -->
+    <ProjectReference Include="..\..\..\day-1\QuotesApi\QuotesApi.csproj" />
+  </ItemGroup>
+
+</Project>
