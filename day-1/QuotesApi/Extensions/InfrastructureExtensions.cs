@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using QuotesApi.Application.Quotes;
 using QuotesApi.Authentication;
 using QuotesApi.Authorization;
 using QuotesApi.Data;
@@ -23,11 +24,30 @@ public static class InfrastructureExtensions
     /// </summary>
     private const string AppInsightsConnectionStringKey = "ApplicationInsights:ConnectionString";
 
+    public const string DevCorsPolicyName = "AllowFrontendDev";
+
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)
     {
         services.AddControllers();
+
+        // Local Angular dev servers (ng serve) run on their own origin, so the
+        // browser blocks their requests to this API without an explicit CORS
+        // policy. Each exercise's app picks its own port (4200, 4201, 4202, ...)
+        // when run alongside others, so any localhost origin is allowed rather
+        // than a fixed list. Scoped to Development only in Program.cs - never
+        // applied to the deployed container.
+        services.AddCors(options =>
+        {
+            options.AddPolicy(DevCorsPolicyName, policy =>
+                policy
+                    .SetIsOriginAllowed(origin =>
+                        Uri.TryCreate(origin, UriKind.Absolute, out var uri) &&
+                        (uri.Host == "localhost" || uri.Host == "127.0.0.1"))
+                    .AllowAnyHeader()
+                    .AllowAnyMethod());
+        });
 
         services.AddDbContext<AppDbContext>(options =>
             options.UseSqlite(
@@ -38,6 +58,9 @@ public static class InfrastructureExtensions
         services.AddScoped<ICollectionRepository, CollectionRepository>();
         services.AddScoped<ICollectionService, CollectionService>();
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+
+        services.AddMediatR(mediatrConfiguration =>
+            mediatrConfiguration.RegisterServicesFromAssemblyContaining<CreateQuoteCommand>());
 
         services.AddSingleton<IClock, SystemClock>();
         services.AddTransient<QuoteFormatter>();

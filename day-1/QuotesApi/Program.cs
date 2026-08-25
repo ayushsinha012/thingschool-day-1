@@ -6,6 +6,20 @@ using QuotesApi.Extensions;
 using Serilog;
 using Serilog.Context;
 
+// The Sqlite ADO.NET provider (Microsoft.Data.Sqlite) executes commands
+// synchronously under the hood - "async" EF calls just run the query on
+// the calling thread pool thread. On this 4-logical-CPU box, the runtime's
+// default ThreadPool minimum (== ProcessorCount) is smaller than the
+// concurrency this endpoint is load-tested at (10), so a burst of
+// concurrent requests can outrun the default thread-injection rate and
+// queue waiting for a new pool thread, inflating tail latency (p95/p99)
+// even though each request's own DB work takes single-digit milliseconds.
+// Evidence: EF command logging showed ~9ms of total SQLite time per
+// request, but ab's p99 stayed >100ms with a max well above the mean -
+// the classic thread-pool-starvation tail, not a slow query. Raising the
+// minimum removes that ramp-up delay for this endpoint's load profile.
+ThreadPool.SetMinThreads(Environment.ProcessorCount * 4, Environment.ProcessorCount * 4);
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog((context, services, configuration) =>
@@ -42,6 +56,11 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
 
     await DbSeeder.SeedAsync(db);
+}
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors(InfrastructureExtensions.DevCorsPolicyName);
 }
 
 app.UseAuthentication();
