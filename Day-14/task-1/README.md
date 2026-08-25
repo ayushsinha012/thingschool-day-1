@@ -2,6 +2,8 @@
 
 Standalone Angular component that submits a new quote to the Week-1 `QuotesApi`, built with Angular reactive forms — validation, error messages, and focus management driven from a typed `FormGroup`, state (submitting/success/error) held in signals.
 
+Reached via a nav bar with two tabs, **Explore** and **Create** (`app.routes.ts`): Explore is Day-13/task-2's list/detail view, ported in afterward; Create is this form. Both share the `QuotesService`/`Quote` models in this project.
+
 ## API contract
 
 `POST http://localhost:5062/api/quotes` (Week-1 `QuotesApi`, see `day-1/QuotesApi`).
@@ -25,6 +27,10 @@ Success response — `201 Created`:
 Failure responses actually returned by the endpoint:
 - `400` — either a validation problem (`{ errors: { Field: [message, ...] } }`) from `ValidationExtensions.Validate`, or a `ProblemDetails` (`{ title, detail }`) from the domain-level `ArgumentException` catch.
 - `401`/`403` — the endpoint is `.RequireAuthorization(PermissionClaims.CanEditQuotes)`; no anonymous POST.
+
+## Auth (dev-only)
+
+The endpoint above requires a bearer token with the `CanEditQuotes` claim, and this app has no login screen. Rather than build one for a forms/a11y exercise, `app.config.ts` logs in as `QuotesApi`'s own seeded test user (`day-1/QuotesApi/Data/DbSeeder.cs`, `ayush.test@example.com`) via a `provideAppInitializer` before the app starts, and `auth.interceptor.ts` attaches the resulting token to every request to `http://localhost:5062/api/*`. The token lives only in an in-memory signal (`auth.service.ts`) — nothing is persisted to `localStorage`/`sessionStorage`, so a page refresh logs in again. This is explicitly a dev convenience, not a real auth flow — see `result.md` §8.
 
 ## Implementation
 
@@ -50,17 +56,23 @@ Failure responses actually returned by the endpoint:
 
 ## Verification
 
-Done without installing dependencies or running the dev server (no `npm install` was run in this task):
+Three passes, documented in full in `result.md`:
 
-- Manual review of every field/route/limit against the live `day-1/QuotesApi` source, and against its own integration test (`Tests.Integration/QuoteEndpointsTests.cs`), which confirms the route, field casing, and response shape.
-- A one-off `tsc --noEmit` type-check (temporarily borrowing Day-13/task-1's already-installed `node_modules`, removed again afterward) — passes clean.
-- No live POST against a running API — it wasn't up on `localhost:5062` when this was checked, so that's not claimed as verified.
+1. **Source-level review** (no dev server running yet) — every field/route/limit checked against the live `day-1/QuotesApi` source and its integration tests. Caught one real bug: a `form.disable()`/`form.enable()` pair that looked like extra duplicate-submit protection but actually blurred focus off the field the user was typing in when they submitted via Enter (a disabled control loses focus per the HTML spec). Removed — the `submitting()` guard and the button's `disabled` binding were already sufficient.
+2. **Live, keyboard-driven pass with axe** (before the auth fix) — found that every real submission through this UI got a genuine `401`, because the app never attached an `Authorization` header anywhere. Also ran an `axe-core` scan that caught one real accessibility bug (missing `<main>` landmark), fixed and re-scanned clean.
+3. **Live pass again, after adding the dev-only auth flow** (see "Auth" above) — the same keyboard-only script now gets a real `201`, the quote is actually persisted (`GET /api/quotes` total went `10 → 11`), the success panel renders correctly, the form resets, and focus returns to the author field. Re-ran axe on this state too: 0 violations.
 
-See `result.md` for the full verification log and the one real bug this review caught and fixed.
+### Screenshots (live run, after the auth fix)
+
+| Empty | Invalid (keyboard submit) | Success (real 201, persisted) |
+|---|---|---|
+| ![Empty create form](docs/create-01-empty.png) | ![Invalid form with both fields showing errors and the author field focused](docs/create-02-invalid.png) | ![Success panel: Quote created, with the form reset and focus back on Author](docs/create-03-success.png) |
+
+See `result.md` §6–8 for the full verification log, the auth fix, and the accessibility bug caught and fixed.
 
 ## How to run it
 
-Needs the Week-1 `QuotesApi` running locally on `http://localhost:5062` first (see `day-1/QuotesApi`), and a user with the `CanEditQuotes` permission to actually get past the 401.
+Needs the Week-1 `QuotesApi` running locally on `http://localhost:5062` first (see `day-1/QuotesApi`) — the app logs in as its seeded test user automatically on start (see "Auth" above), so no manual login step is needed.
 
 ```bash
 npm install

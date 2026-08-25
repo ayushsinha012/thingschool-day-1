@@ -129,3 +129,65 @@ Re-ran the symlinked `tsc --noEmit` after the change — still exits 0.
 - If the 200/1000 limits changed server-side, the client and server would disagree: a lower server limit would mean users pass client-side validation and still get a real 400 back (which the app does show, via `extractServerError`, so it's not silent) — a higher server limit would just mean the client blocks input the server would have accepted, which is a false-negative UX problem, not a broken submission.
 - If the route moved off `/api/quotes` or the port stopped being 5062, every request from `QuotesService.createQuote()` would fail outright, since the base URL is a hardcoded string, not pulled from config.
 - If the response stopped being `{ id, author, text, isDeleted }` — say `id` got renamed or dropped — `created.set(quote)` would still run, but the success panel's `created()!.author`/`created()!.text` interpolation would just render `undefined` for whichever field changed shape, with no error surfaced, since there's no runtime validation on the response either.
+
+## 6. Live verification pass: keyboard-driven, with axe
+
+Everything above was a source-level review — no `node_modules`, no running API. This section supersedes that: `day-1/QuotesApi` was brought up on `http://localhost:5062` (seeded with 10 quotes), this app was served with `ng serve` on `http://localhost:4200`, and the actual Create form (now reached via a nav bar's **Create** tab, alongside an **Explore** tab added afterward — see the app's `app.routes.ts`) was driven end to end with a headless-Chromium script (`playwright`) using **keyboard input only** — `page.keyboard.press('Tab'/'Enter')`, no `.click()` on form fields — plus an in-page `axe-core` scan. Screenshots and the full log are in `docs/`.
+
+**Empty state** (`docs/create-01-empty.png`) — both fields start with `aria-invalid="false"`, no error text, confirmed by reading the DOM attribute directly, not just visually.
+
+**Keyboard path** — from a blank page, three `Tab` presses landed focus on `#author-input` (`Explore` link → `Create` link → author field), confirming the tab order is nav-then-form with no keyboard trap. Pressing `Enter` while focused in a single-line `<input>` submits the form natively (this only works from `<input>`, not `<textarea>` — a real detail, since Enter inside the multi-line `text` field would just insert a newline).
+
+**Invalid state** (`docs/create-02-invalid.png`) — submitting the empty form via `Enter` produced `aria-invalid="true"` on both fields, `aria-describedby="author-error"` on the author input correctly resolving to an element whose text is "Author is required.", and focus landed back on `#author-input` — the first invalid field, exactly as designed. To check the "first invalid field" logic isn't just "always focus author," I filled only `author` (valid) and submitted again via keyboard from the submit button (`Tab`, `Tab`, `Enter`): focus moved to `#text-input` this time, confirming the check is genuinely per-field, not hardcoded.
+
+**Submitting state** — the button's `disabled` property read back as `true` at the moment of submission (confirmed via the DOM, not just the code), but on `localhost` the round trip to the API resolves faster than a screenshot can reliably catch — by the time the screenshot fired, the response had already landed. This is being reported honestly rather than staged: the submitting state exists and is exercised (the assertion on `disabled` proves it ran), but there's no clean screenshot of it, unlike the other three states.
+
+**Server-error state** (screenshot since replaced — see §8) — submitting a fully valid quote (`Rumi` / "The wound is the place where the light enters you.") returned a real `401` from the API and the panel showed "You are not authorized to create quotes.", which is `extractServerError()`'s 401/403 branch working correctly against a real response, not a mocked one.
+
+### A concrete gap this surfaced: the form could never actually succeed as originally wired
+
+`QuoteEndpoints.cs` gates `POST /api/quotes` behind `.RequireAuthorization(PermissionClaims.CanEditQuotes)`, and `QuotesService.createQuote()` sent a plain unauthenticated `HttpClient.post`. There was no login flow, no token storage, and no `Authorization` header anywhere in this Angular app. The 401 above wasn't a contrived test case — it's what **every** real submission through this UI got at the time. The error-handling code was correct (it surfaced the real reason clearly), but the form's happy path was unreachable until an auth flow was added on top. **Fixed in §8** — this section is kept as-is because it's an accurate record of a real bug caught live, not because it's still the current behavior.
+
+### The one bug axe caught, fixed
+
+An `axe-core` scan of the invalid-state DOM (chosen deliberately over the empty state, since that's the state with the most ARIA wiring active) reported exactly one violation:
+
+```json
+{ "id": "landmark-one-main", "impact": "moderate", "help": "Document should have one main landmark" }
+```
+
+`app.html` rendered `<router-outlet>` directly inside a plain `<div class="app-shell">` — no `<main>` anywhere in the document. Screen reader users rely on landmark navigation (e.g. "jump to main content") to skip the nav bar; without one, that shortcut does nothing. Fixed by wrapping the outlet:
+
+```html
+<main>
+  <router-outlet></router-outlet>
+</main>
+```
+
+Re-ran the same axe scan after the fix: **0 violations**. This is the "screen-reader or axe" check the exercise asks for, and the bug it caught (missing landmark) is a different class of mistake than the disable/enable focus bug in section 4 — that one came from reading the code, this one came from a tool that models what assistive tech actually announces.
+
+## 7. What this live pass didn't cover
+
+- No screen-reader software (NVDA/VoiceOver) was run against this build — the a11y check here is axe's static analysis plus manual `aria-*` attribute inspection, not a listened-to announcement. Axe catches missing/malformed landmarks, labels, and roles; it does not catch a "sounds confusing when read aloud" problem.
+- Only Chromium was used; no cross-browser check.
+- (Originally listed here: "the success path is unverified live." No longer true — see §8.)
+
+## 8. Fixing the auth gap, and verifying the real success path
+
+Section 6 found that this form could never actually succeed, because `QuotesService` never sent an `Authorization` header. Building a full login screen is out of scope for a forms/a11y exercise, so the fix taken was the smallest one that makes the real request succeed:
+
+- **`src/app/auth.service.ts`** — a thin `AuthService` with one `login(email, password)` method that calls the real `POST /api/auth/login` and stores the returned access token in an in-memory `signal` (not `localStorage`/`sessionStorage` — a refresh means logging in again, which is an acceptable trade for a dev-only flow and avoids stashing a token in persistent browser storage).
+- **`src/app/auth.interceptor.ts`** — a functional `HttpInterceptorFn` that reads the token from `AuthService` and attaches `Authorization: Bearer <token>` to any request whose URL starts with `http://localhost:5062/api`. Requests before login succeeds (or to other origins) pass through unchanged.
+- **`src/app/app.config.ts`** — registers the interceptor via `provideHttpClient(withInterceptors([authInterceptor]))`, and uses `provideAppInitializer(...)` to call `AuthService.login(...)` **before the app renders**, using the exact seeded test user `day-1/QuotesApi/Data/DbSeeder.cs` already creates (`ayush.test@example.com` / the seeded password) — the same account used earlier in this project's history to seed the 10 demo quotes via `curl`. The login call is wrapped in `.catch(() => undefined)` so a backend that isn't up yet doesn't hang app bootstrap; it just means the first real POST will 401 again until the API is reachable.
+
+This is explicitly a **dev-only convenience**, not a real auth flow, and the code says so in a comment at both the config and the service. A real app would need an actual login screen, token refresh, and secure storage — none of that is in scope here.
+
+**Re-ran the exact same keyboard-driven script from §6** against the fixed app:
+
+- Empty state — unchanged, still `aria-invalid="false"` on load (`docs/create-01-empty.png`).
+- Invalid state — unchanged, still focuses `#author-input` first with `aria-describedby` correctly wired (`docs/create-02-invalid.png`).
+- **Real submission** — filled `Maya Angelou` / "Try to be a rainbow in someone else's cloud." via keyboard, submitted with `Enter` on the focused submit button. Response: **`201`**, body `{ "id": 11, "author": "Maya Angelou", "text": "...", "isDeleted": false }`. Confirmed independently with `curl http://localhost:5062/api/quotes/11` and by checking the list total: `GET /api/quotes` went from `total: 10` to `total: 11`. This is a real, persisted row, not a mocked response.
+- **Success state** (`docs/create-03-success.png`) — the success panel rendered "Quote created." with the correct quote text and author, the form fields both read back as empty strings (confirmed `form.reset()` ran), and `document.activeElement.id` was `author-input` — confirming the "refocus author on success" behavior from `submit()`'s `next` handler actually fires, not just that the code exists.
+- **axe re-scan on the success state**: 0 violations — the `<main>` fix from §6 holds across routes/states, not just the one DOM snapshot it was originally caught on.
+
+The `docs/create-03-server-error.png` screenshot from §6 was removed and replaced with `docs/create-03-success.png`, since the server-error screenshot no longer reflects this app's actual behavior — keeping a stale "it's broken" screenshot next to a fixed app would be more misleading than useful.
