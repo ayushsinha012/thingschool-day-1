@@ -36,6 +36,12 @@ Once the dev server is running, open `http://localhost:4200/`. The app reloads a
 - A constructor `effect()` reads `page()` and `size()` and re-fetches whenever either changes.
 - The template (`app.html`) uses `@if`/`@else if` for the loading/error/empty/success branches and `@for (quote of filteredQuotes(); track quote.id)` for the quote list.
 
+## Screenshot
+
+![Quotes browser showing the seeded list, search box, and word counts](docs/screenshot.png)
+
+Captured against a live run: `ng serve` on `http://localhost:4201` (Day-14's task-1 app was already using the default `4200`) against the Week-1 `QuotesApi` on `http://localhost:5062`, seeded with 10 quotes via `POST /api/quotes`.
+
 ## Testing
 
 ```bash

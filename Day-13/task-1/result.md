@@ -47,7 +47,18 @@ Not covered by the current tests: the `error` branch of `viewState` (a failing H
 
 I initially expected one `fixture.detectChanges()` to be enough to get from "component created" to "data on screen" in each test. It isn't: the HTTP call lives inside the constructor's `effect()`, which only fires on the first change-detection pass, so the request isn't sent until after that first `detectChanges()`. The fix (visible in the spec file) is the two-step pattern used in every test: `detectChanges()` to trigger the effect and send the request, then `httpMock.expectOne(...).flush(...)` to resolve it, then (where the test needs to interact further, like typing into the filter box) a second `detectChanges()` to re-render with the resolved data.
 
-## 6. What would break if the API contract changes
+## 6. Live run screenshot
+
+![Quotes browser rendering 10 seeded quotes with search box](docs/screenshot.png)
+
+Captured with the real stack running end to end:
+
+- `QuotesApi` (`day-1/QuotesApi`) running on `http://localhost:5062`, seeded with 10 quotes via `POST /api/quotes` (author + text pairs, e.g. Einstein, Twain, Angelou).
+- This app served with `ng serve --port 4201` (4200 was already taken by another exercise's app running alongside it) and opened in a real browser.
+
+Getting to this screenshot surfaced one more real gap, beyond what the unit tests cover: `QuotesApi` had **no CORS policy configured at all**, so the browser silently blocked every request from the Angular dev server's origin (`http://localhost:4201`) — the API worked fine from `curl`, but returned no `Access-Control-Allow-Origin` header, which `HttpClient` in the browser needs. Fixed by adding a `Development`-only CORS policy in `QuotesApi`'s `InfrastructureExtensions`/`Program.cs` (not part of this Angular app's code, but required to demonstrate it live) that allows local dev origins. Confirmed via `curl -i -H "Origin: http://localhost:4201" http://localhost:5062/api/quotes` returning `Access-Control-Allow-Origin: http://localhost:4201` after the fix.
+
+## 7. What would break if the API contract changes
 
 - Renaming or restructuring the envelope (`page`/`size`/`total`/`items`) or item fields (`id`/`author`/`text`/`isDeleted`) breaks `QuotesPage`/`Quote` silently — there's no runtime validation, so a mismatch would surface as `undefined` values in the UI (e.g. blank author/text) rather than a compile or request error.
 - Moving the base URL or port away from `http://localhost:5062/api/quotes` breaks every request, since `QuotesService.baseUrl` is hardcoded rather than injected from config.
