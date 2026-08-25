@@ -1,0 +1,32 @@
+<div class="app-shell">
+  <nav class="tab-nav" aria-label="Primary">
+    <a
+      routerLink="/explore"
+      routerLinkActive="tab-active"
+      [ariaCurrentWhenActive]="'page'"
+      class="tab-link"
+    >
+      Explore
+    </a>
+    <a
+      routerLink="/create"
+      routerLinkActive="tab-active"
+      [ariaCurrentWhenActive]="'page'"
+      class="tab-link"
+    >
+      Create
+    </a>
+    <a
+      routerLink="/create-signal"
+      routerLinkActive="tab-active"
+      [ariaCurrentWhenActive]="'page'"
+      class="tab-link"
+    >
+      Create (Signal Form)
+    </a>
+  </nav>
+
+  <main>
+    <router-outlet></router-outlet>
+  </main>
+</div>
