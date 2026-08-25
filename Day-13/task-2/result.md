@@ -12,10 +12,10 @@ Build a small Angular feature against a real endpoint from the Week-1 `QuotesApi
 
 ## 2. What was built
 
-- **Models** (`src/app/quote.ts`): `Quote { id, author, text, isDeleted }`, `QuotesPage { page, size, total, items }`, `QuoteDetail { id, author, text, display, characterCount }`.
-- **Endpoints used** — real Week-1 `QuotesApi` (`day-1/QuotesApi`), confirmed against `Endpoints/QuoteEndpoints.cs` and `Application/Quotes/GetQuoteByIdQuery.cs`:
+- **Models** (`src/app/quote.ts`): `Quote { id, author, text, isDeleted }`, `QuotesPage { page, size, total, items }`, `QuoteDetail { id, author, text, display, characterCount }` (the last a client-side view model — see §6).
+- **Endpoints used** — real Week-1 `QuotesApi` (`day-1/QuotesApi`), confirmed against the actual `Endpoints/QuoteEndpoints.cs` source and by calling the live endpoint with `curl`:
   - `GET http://localhost:5062/api/quotes?page={page}&size={size}` → `{ page, size, total, items: Quote[] }`.
-  - `GET http://localhost:5062/api/quotes/{id}` → `{ id, author, text, display, characterCount }` (404 if not found).
+  - `GET http://localhost:5062/api/quotes/{id}` → `{ id, author, text, isDeleted }` (404 if not found) — the same shape as a list item. `display`/`characterCount` do not exist anywhere in the API; an earlier version of this doc claimed they did and cited a nonexistent `Application/Quotes/GetQuoteByIdQuery.cs` file as the source. That file doesn't exist in this repo — the claim was wrong. See §6.
 - **`QuotesService`** (`src/app/quotes.service.ts`): thin injectable, `getQuotes(page, size)` and `getQuoteById(id)`, both plain `HttpClient` calls against the base URL above.
 - **`App`** (`src/app/app.ts`), standalone component, `inject()`-based DI, signals throughout:
   - List side: `page`, `size`, `quotes`, `total`, `loading`, `error` signals; `totalPages`, `hasPrevious`, `hasNext` computed from `total`/`size`/`page`; `filter` signal with a `filteredQuotes` computed (case-insensitive match on author or text); `viewState` computed to `loading | error | empty | success`.
@@ -52,14 +52,53 @@ So the in-flight request for a page the user has since paged away from is cancel
 
 **Fix, detail side** — the detail fetch is driven through `toObservable(this.detailRequest).pipe(switchMap(...))` instead of a manual `subscribe()` per click. `switchMap` unsubscribes the previous inner request the moment a new `detailRequest` value arrives, so a slow response for a quote the user has already clicked past never lands on top of the currently-displayed detail. `detailRequest` is always set to a fresh object (not reused), including on retry, so a retry for the same id still triggers a new emission.
 
-## 6. What would break if the API contract changed
+## 6. Bug found and fixed: fabricated detail-endpoint contract
 
-- Renaming/restructuring the list envelope (`page`/`size`/`total`/`items`) or the item shape (`id`/`author`/`text`/`isDeleted`), or the detail shape (`id`/`author`/`text`/`display`/`characterCount`), breaks the `Quote`/`QuotesPage`/`QuoteDetail` interfaces silently — there's no runtime schema validation, so a mismatch surfaces as `undefined` in the template rather than a compile-time or request-time error.
+**Bug:** the original `QuotesService.getQuoteById` typed the response of `GET /api/quotes/{id}` as `QuoteDetail { id, author, text, display, characterCount }` and returned it as-is. The real endpoint ([`QuoteEndpoints.cs:121-149`](../../day-1/QuotesApi/Endpoints/QuoteEndpoints.cs)) does `Results.Ok(quote)` on the raw `Quote` entity — it returns `{ id, author, text, isDeleted }`, the same shape as a list item. `display` and `characterCount` never existed server-side. An earlier version of this document even cited a specific file, `Application/Quotes/GetQuoteByIdQuery.cs`, as having confirmed the `display`/`characterCount` shape — that file does not exist anywhere in `day-1/QuotesApi`. That citation was fabricated, not a real verification.
+
+**Effect in the running app:** since JSON deserialization silently leaves missing fields `undefined` rather than throwing, the bug didn't surface as an error — the detail panel rendered with a blank quote line and a blank "Characters" value. Confirmed with a screenshot before the fix: `docs/detail-before-fix.png`.
+
+**Fix:** `QuotesService.getQuoteById` now requests the real `Quote` shape and derives `display`/`characterCount` client-side:
+
+```ts
+getQuoteById(id: number): Observable<QuoteDetail> {
+  return this.http.get<Quote>(`${this.baseUrl}/${id}`).pipe(
+    map((quote) => ({
+      id: quote.id,
+      author: quote.author,
+      text: quote.text,
+      display: `“${quote.text}” — ${quote.author}`,
+      characterCount: quote.text.length
+    }))
+  );
+}
+```
+
+Confirmed fixed with a second screenshot: `docs/detail-after-fix.png`, showing the composed quote line and a real character count (45, matching "Imagination is more important than knowledge.".length).
+
+This is the concrete instance of "a field name that doesn't match your real API" the exercise asks to catch — caught by comparing the frontend's assumed contract against the actual endpoint source and a live `curl` call, not by trusting either the original code comment or the file it cited.
+
+## 7. What would break if the API contract changed
+
+- Renaming/restructuring the list envelope (`page`/`size`/`total`/`items`) or the item shape (`id`/`author`/`text`/`isDeleted`) breaks the `Quote`/`QuotesPage` interfaces silently — there's no runtime schema validation, so a mismatch surfaces as `undefined` in the template rather than a compile-time or request-time error. `QuoteDetail` is now insulated from this for `display`/`characterCount` specifically, since those are computed client-side rather than read off the response (see §6) — but `id`/`author`/`text` are still read directly off the API response and would break the same way.
 - `QuotesService.baseUrl` is hardcoded to `http://localhost:5062/api/quotes`; moving the API to a different host/port breaks every request.
 - `totalPages`/`hasNext`/`hasPrevious` assume `page` is 1-indexed and `total` is the grand total across all pages, not the count on the current page — switching either convention breaks pagination without any error being thrown.
-- If the detail endpoint stopped returning `display` (e.g. only returned raw `text`), the detail card would render `undefined` instead of falling back to composing it client-side, since `display` is used as-is rather than derived.
+- If the detail endpoint renamed `text` or `author`, `quote.text.length` inside the `map()` would throw on `undefined`, surfacing as the generic "Failed to load quote." error rather than a compile error (the mapping isn't typo-proof against a real rename, just against the fields simply not being sent). If either field started coming back as an empty string instead, `display` would render with a blank half and `characterCount` would silently read `0` — no error, just wrong-looking output.
 - The 404-vs-network-failure distinction in `describeError()` depends on `HttpErrorResponse.status`; if the API started returning a different status for "not found" (e.g. 200 with an empty body), the error panel would show the generic fallback message instead of "Quote not found."
 
-## 7. Screenshot
+## 8. Screenshots (live run)
 
-Could not capture a live screenshot: `ng serve` in this environment fails immediately because the installed Node.js is v18.20.8, and this Angular CLI version requires Node 20.19+/22.12+ (see `ng-serve` output). Per the task constraints, dependency/toolchain repair was out of scope for this submission, so no `task-2-ui.png` is included — the evidence above is drawn directly from the actual source files (`app.ts`, `app.html`, `quotes.service.ts`, `quote.ts`) and the real API source (`day-1/QuotesApi/Endpoints/QuoteEndpoints.cs`, `Application/Quotes/GetQuoteByIdQuery.cs`).
+**List view:**
+
+![Quote list with the first quote selected](docs/detail-after-fix.png)
+
+**Detail bug, before the fix** (blank quote text, blank character count):
+
+![Detail panel showing only the author, with quote text and character count both blank](docs/detail-before-fix.png)
+
+Captured with the real stack running end to end:
+
+- `QuotesApi` (`day-1/QuotesApi`) running on `http://localhost:5062`, seeded with 10 quotes via `POST /api/quotes`.
+- This app served with `ng serve --port 4202` (4200/4201 were already in use by other exercises' apps running alongside it) and driven with a headless Playwright script (`chromium.launch()` → click the first quote card → screenshot) since no interactive browser session was available in this environment.
+
+Getting this running also required a fix outside this app: `QuotesApi` had no CORS policy configured at all, so the browser silently blocked every request from the Angular dev server's origin even though `curl` worked fine. Fixed with a `Development`-only CORS policy in `QuotesApi`'s `Program.cs`/`InfrastructureExtensions.cs` that allows local dev origins — not part of this app's code, but required to demonstrate it live.

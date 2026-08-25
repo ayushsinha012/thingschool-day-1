@@ -12,6 +12,10 @@ export interface QuotesPage {
   items: Quote[];
 }
 
+// GET /api/quotes/{id} returns the same shape as a list item (id, author,
+// text, isDeleted) - it has no display/characterCount fields. QuoteDetail is
+// a client-side view model derived from that response in QuotesService, not
+// a distinct API contract.
 export interface QuoteDetail {
   id: number;
   author: string;

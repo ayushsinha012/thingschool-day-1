@@ -11,14 +11,12 @@ npm install
 ng serve
 ```
 
-Note: `ng serve` requires Node 20.19+/22.12+. This environment has Node 18.20.8, so the dev server could not be started here — no live screenshot is included in this submission for that reason.
-
 ## API
 
 - `QuotesService` (`src/app/quotes.service.ts`):
   - `getQuotes(page, size)` → `GET http://localhost:5062/api/quotes?page={page}&size={size}` → `{ page, size, total, items }`, each item `{ id, author, text, isDeleted }`.
-  - `getQuoteById(id)` → `GET http://localhost:5062/api/quotes/{id}` → `{ id, author, text, display, characterCount }`.
-- Models in `src/app/quote.ts`: `Quote`, `QuotesPage`, `QuoteDetail`.
+  - `getQuoteById(id)` → `GET http://localhost:5062/api/quotes/{id}` → real response is `{ id, author, text, isDeleted }` (the same shape as a list item — confirmed against `QuoteEndpoints.cs`, which does `Results.Ok(quote)` on the raw entity, and by calling the live endpoint directly). `display` and `characterCount` are **not** returned by the API; `QuotesService.getQuoteById` composes them client-side from `text`/`author`. See `result.md` §6 for the bug this corrects.
+- Models in `src/app/quote.ts`: `Quote`, `QuotesPage`, `QuoteDetail` (the last one a client-side view model, not a distinct API shape).
 
 ## Functionality
 
@@ -38,4 +36,6 @@ See `result.md` for the full breakdown, including the real endpoint fields (veri
 
 ## Screenshot
 
-Not included — the dev server couldn't start in this environment (Node version too old for this Angular CLI). See `result.md` §7.
+![Detail panel showing the composed quote text and character count](docs/detail-after-fix.png)
+
+Captured against a live run: `ng serve --port 4202` (4200/4201 were already in use by other exercises' apps running alongside it) against the Week-1 `QuotesApi` on `http://localhost:5062`, seeded with 10 quotes. `docs/detail-before-fix.png` shows the same detail panel before the `display`/`characterCount` fix — see `result.md` §6.
