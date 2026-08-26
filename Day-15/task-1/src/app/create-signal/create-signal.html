@@ -1,0 +1,65 @@
+<div class="page">
+  <header class="page-header">
+    <h1>Add a Quote (Signal Forms)</h1>
+    <p class="subtitle">Same Week-1 QuotesApi endpoint as Create, rebuilt with the Signal Forms preview.</p>
+  </header>
+
+  <section
+    class="form-section"
+    aria-label="Create a quote (Signal Forms)"
+    aria-live="polite"
+    [attr.aria-busy]="status() === 'submitting'"
+  >
+    @if (status() === 'success') {
+      <div class="state-panel success-panel" role="status">
+        <p class="state-title">Quote created.</p>
+        <p class="state-subtitle">&ldquo;{{ created()!.text }}&rdquo; &mdash; {{ created()!.author }}</p>
+      </div>
+    }
+
+    @if (status() === 'error') {
+      <div class="state-panel error-panel" role="alert">
+        <p class="state-title">{{ submitError() }}</p>
+      </div>
+    }
+
+    @if (status() === 'submitting') {
+      <p class="visually-hidden" role="status">Creating quote&hellip;</p>
+    }
+
+    <form class="quote-form" [formRoot]="quoteForm" novalidate>
+      <div class="form-field">
+        <label for="author-input">Author</label>
+        <input
+          id="author-input"
+          type="text"
+          [formField]="quoteForm.author"
+          autocomplete="off"
+          [attr.aria-invalid]="fieldInvalid('author')"
+          [attr.aria-describedby]="fieldInvalid('author') ? 'author-error' : null"
+        />
+        @if (fieldInvalid('author')) {
+          <p id="author-error" class="field-error" role="alert">{{ fieldErrorMessage('author') }}</p>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="text-input">Quote text</label>
+        <textarea
+          id="text-input"
+          rows="4"
+          [formField]="quoteForm.text"
+          [attr.aria-invalid]="fieldInvalid('text')"
+          [attr.aria-describedby]="fieldInvalid('text') ? 'text-error' : null"
+        ></textarea>
+        @if (fieldInvalid('text')) {
+          <p id="text-error" class="field-error" role="alert">{{ fieldErrorMessage('text') }}</p>
+        }
+      </div>
+
+      <button type="submit" class="submit-button" [disabled]="status() === 'submitting'">
+        {{ status() === 'submitting' ? 'Creating…' : 'Create quote' }}
+      </button>
+    </form>
+  </section>
+</div>
