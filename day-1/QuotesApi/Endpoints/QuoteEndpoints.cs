@@ -1,7 +1,10 @@
+using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
+using QuotesApi.Application.Quotes;
 using QuotesApi.Authorization;
+using QuotesApi.Data;
 using QuotesApi.DTOs;
-using QuotesApi.Models;
 using QuotesApi.Repositories;
 using QuotesApi.Validation;
 
@@ -67,11 +70,76 @@ public static class QuoteEndpoints
                     });
             });
 
+        group.MapGet(
+            "/performance/author-quotes",
+            async (
+                int? authors,
+                AppDbContext db,
+                CancellationToken cancellationToken) =>
+            {
+                var authorCount = authors.GetValueOrDefault(50);
+
+                if (authorCount < 1 || authorCount > 100)
+                {
+                    return Results.BadRequest(
+                        new ProblemDetails
+                        {
+                            Title = "Invalid author count",
+                            Detail = "Authors must be between 1 and 100."
+                        });
+                }
+
+                // Selected authors as a subquery (not materialized client-side)
+                // so the whole thing runs as ONE round trip: "WHERE Author IN
+                // (SELECT DISTINCT Author ... ORDER BY Author LIMIT @authorCount)"
+                // instead of the two round trips this endpoint used to make
+                // (fetch author names, then fetch their quotes). Also projects
+                // straight to (Author, Text) instead of full Quote entities so
+                // the unused Id/IsDeleted columns aren't read, allocated, or
+                // JSON-serialized for every one of the ~authorCount * 30 rows
+                // returned.
+                var selectedAuthors = db.Quotes
+                    .AsNoTracking()
+                    .Where(quote => !quote.IsDeleted)
+                    .Select(quote => quote.Author)
+                    .Distinct()
+                    .OrderBy(author => author)
+                    .Take(authorCount);
+
+                var quotesForAuthors = await db.Quotes
+                    .AsNoTracking()
+                    .Where(quote => !quote.IsDeleted && selectedAuthors.Contains(quote.Author))
+                    .OrderBy(quote => quote.Author)
+                    .Select(quote => new { quote.Author, quote.Text })
+                    .ToListAsync(cancellationToken);
+
+                // Rows arrive pre-sorted by Author (from the ORDER BY above),
+                // so a single linear pass groups them without building a
+                // second hash lookup (ToLookup) over the whole result set.
+                var result = new List<object>(authorCount);
+                string? currentAuthor = null;
+                List<string>? currentQuotes = null;
+
+                foreach (var row in quotesForAuthors)
+                {
+                    if (currentAuthor != row.Author)
+                    {
+                        currentAuthor = row.Author;
+                        currentQuotes = new List<string>();
+                        result.Add(new { author = currentAuthor, quotes = currentQuotes });
+                    }
+
+                    currentQuotes!.Add(row.Text);
+                }
+
+                return Results.Ok(result);
+            });
+
         group.MapPost(
             "/",
             async (
                 CreateQuoteRequest request,
-                IQuoteRepository repository,
+                IMediator mediator,
                 ILogger<QuoteEndpointsLogCategory> logger,
                 CancellationToken cancellationToken) =>
             {
@@ -82,13 +150,15 @@ public static class QuoteEndpoints
                     return validationProblem;
                 }
 
-                Quote quote;
+                CreateQuoteResult created;
 
                 try
                 {
-                    quote = Quote.Create(
-                        request.Author,
-                        request.Text);
+                    created = await mediator.Send(
+                        new CreateQuoteCommand(
+                            request.Author,
+                            request.Text),
+                        cancellationToken);
                 }
                 catch (ArgumentException ex)
                 {
@@ -104,10 +174,6 @@ public static class QuoteEndpoints
                         });
                 }
 
-                var created = await repository.AddAsync(
-                    quote,
-                    cancellationToken);
-
                 logger.LogInformation(
                     "Created quote {QuoteId}",
                     created.Id);
@@ -122,12 +188,12 @@ public static class QuoteEndpoints
             "/{id:int}",
             async (
                 int id,
-                IQuoteRepository repository,
+                IMediator mediator,
                 ILogger<QuoteEndpointsLogCategory> logger,
                 CancellationToken cancellationToken) =>
             {
-                var quote = await repository.GetByIdAsync(
-                    id,
+                var quote = await mediator.Send(
+                    new GetQuoteByIdQuery(id),
                     cancellationToken);
 
                 if (quote is null)
