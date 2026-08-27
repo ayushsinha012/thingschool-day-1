@@ -1,0 +1,122 @@
+<div class="page">
+  <header class="page-header">
+    <p class="kicker">Week 1 &middot; QuotesApi</p>
+    <h1>Quotes</h1>
+    <p class="subtitle">A curated collection of memorable quotes &mdash; select one to see its full detail.</p>
+  </header>
+
+  <section class="toolbar" aria-label="Search quotes">
+    <label class="search-label" for="quote-filter">Filter by author or text</label>
+    <div class="search-field">
+      <svg class="search-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <circle cx="9" cy="9" r="6.5" stroke="currentColor" stroke-width="1.6" />
+        <line x1="13.7" y1="13.7" x2="18" y2="18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+      </svg>
+      <input
+        id="quote-filter"
+        #filterInput
+        type="text"
+        [value]="filter()"
+        (input)="filter.set(filterInput.value)"
+        placeholder="e.g. Twain"
+        autocomplete="off"
+      />
+      @if (filter()) {
+        <button
+          type="button"
+          class="clear-button"
+          aria-label="Clear filter"
+          (click)="filter.set(''); filterInput.value = ''; filterInput.focus()"
+        >
+          &times;
+        </button>
+      }
+    </div>
+  </section>
+
+  <section class="list-pane" aria-label="Quote list">
+    <div class="content" aria-live="polite" [attr.aria-busy]="loading()">
+      @if (loading()) {
+        <ul class="quote-list" aria-hidden="true">
+          @for (placeholder of [0, 1, 2, 3]; track placeholder) {
+            <li class="quote-card skeleton-card">
+              <div class="skeleton-line skeleton-line--wide"></div>
+              <div class="skeleton-line skeleton-line--medium"></div>
+              <div class="skeleton-line skeleton-line--short"></div>
+            </li>
+          }
+        </ul>
+        <p class="visually-hidden" role="status">Loading quotes&hellip;</p>
+      } @else if (error()) {
+        <div class="state-panel error-panel" role="alert">
+          <svg class="state-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.6" />
+            <line x1="12" y1="7.5" x2="12" y2="13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+            <circle cx="12" cy="16.5" r="1" fill="currentColor" />
+          </svg>
+          <p class="state-title">{{ error() }}</p>
+          <button type="button" class="retry-button" (click)="retry()">Retry</button>
+        </div>
+      } @else if (quotes().length === 0) {
+        <div class="state-panel empty-panel">
+          <svg class="state-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M7 8h10M7 12h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+            <rect x="3.5" y="4.5" width="17" height="13" rx="2.5" stroke="currentColor" stroke-width="1.6" />
+            <path d="M9 17.5l-2.5 3v-3" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+          </svg>
+          <p class="state-title">No quotes found.</p>
+          <p class="state-subtitle">Try a different author or search term.</p>
+        </div>
+      } @else {
+        <ul class="quote-list">
+          @for (quote of quotes(); track quote.id) {
+            <li>
+              <a class="quote-card" [routerLink]="['/quotes', quote.id]" style="view-transition-name: quote-detail">
+                <span class="quote-card-icon" aria-hidden="true">
+                  <svg viewBox="0 0 20 20" fill="none" class="icon-chevron">
+                    <path d="M7.5 4.5l6 5.5-6 5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </span>
+                <p class="quote-text">&ldquo;{{ quote.text }}&rdquo;</p>
+                <div class="quote-meta">
+                  <span class="quote-author">&mdash; {{ quote.author }}</span>
+                  <span class="quote-wordcount">{{ wordCount(quote.text) }} words</span>
+                </div>
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    <footer class="pagination" aria-label="Pagination">
+      <button
+        type="button"
+        class="page-button"
+        [disabled]="!hasPrevious()"
+        (click)="previousPage()"
+        aria-label="Go to previous page"
+      >
+        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <path d="M12 4l-6 6 6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span class="page-button-label">Previous</span>
+      </button>
+
+      <span class="page-status">Page {{ page() }} of {{ totalPages() }}</span>
+
+      <button
+        type="button"
+        class="page-button"
+        [disabled]="!hasNext()"
+        (click)="nextPage()"
+        aria-label="Go to next page"
+      >
+        <span class="page-button-label">Next</span>
+        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <path d="M8 4l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+    </footer>
+  </section>
+</div>
