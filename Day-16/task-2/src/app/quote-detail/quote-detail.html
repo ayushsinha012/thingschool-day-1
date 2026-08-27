@@ -1,0 +1,79 @@
+<div class="page">
+  <a routerLink="/explore" class="back-link">
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M12 4l-6 6 6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+    Back to quotes
+  </a>
+
+  <div class="detail-wrap" aria-live="polite" [attr.aria-busy]="loading()">
+    @switch (viewState()) {
+      @case ('invalid') {
+        <div class="state-panel error-panel" role="alert">
+          <svg class="state-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.6" />
+            <line x1="12" y1="7.5" x2="12" y2="13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+            <circle cx="12" cy="16.5" r="1" fill="currentColor" />
+          </svg>
+          <p class="state-title">Invalid quote id.</p>
+          <p class="state-subtitle">"{{ id() }}" isn't a valid quote id &mdash; it should be a positive whole number.</p>
+          <a routerLink="/explore" class="retry-button">Back to quotes</a>
+        </div>
+      }
+      @case ('loading') {
+        <div class="detail-panel-inner">
+          <div class="detail-skeleton" aria-hidden="true">
+            <div class="skeleton-line skeleton-line--wide"></div>
+            <div class="skeleton-line skeleton-line--medium"></div>
+            <div class="skeleton-line skeleton-line--short"></div>
+          </div>
+          <p class="visually-hidden" role="status">Loading quote&hellip;</p>
+        </div>
+      }
+      @case ('not-found') {
+        <div class="state-panel error-panel" role="alert">
+          <svg class="state-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M7 8h10M7 12h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+            <rect x="3.5" y="4.5" width="17" height="13" rx="2.5" stroke="currentColor" stroke-width="1.6" />
+          </svg>
+          <p class="state-title">Quote not found.</p>
+          <p class="state-subtitle">{{ appError()?.friendlyMessage }}</p>
+          <a routerLink="/explore" class="retry-button">Back to quotes</a>
+        </div>
+      }
+      @case ('error') {
+        <div class="state-panel error-panel" role="alert">
+          <svg class="state-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.6" />
+            <line x1="12" y1="7.5" x2="12" y2="13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+            <circle cx="12" cy="16.5" r="1" fill="currentColor" />
+          </svg>
+          <p class="state-title">{{ appError()?.friendlyMessage }}</p>
+          <button type="button" class="retry-button" (click)="retry()">Retry</button>
+        </div>
+      }
+      @case ('success') {
+        @if (detail(); as quote) {
+          <div class="detail-panel-inner" style="view-transition-name: quote-detail">
+            <p class="detail-eyebrow">Quote detail</p>
+            <p class="detail-display">{{ quote.display }}</p>
+            <dl class="detail-meta">
+              <div class="detail-meta-row">
+                <dt>Id</dt>
+                <dd>{{ quote.id }}</dd>
+              </div>
+              <div class="detail-meta-row">
+                <dt>Author</dt>
+                <dd>{{ quote.author }}</dd>
+              </div>
+              <div class="detail-meta-row">
+                <dt>Characters</dt>
+                <dd>{{ quote.characterCount }}</dd>
+              </div>
+            </dl>
+          </div>
+        }
+      }
+    }
+  </div>
+</div>

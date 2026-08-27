@@ -1,0 +1,69 @@
+:host {
+  --color-bg: #f6f5fb;
+  --color-surface: #ffffff;
+  --color-border: #e4e1f0;
+  --color-text: #201c33;
+  --color-text-muted: #6b6680;
+  --color-accent: #6d4de6;
+  --color-accent-dark: #5738c7;
+  --color-accent-soft: rgba(109, 77, 230, 0.08);
+  --color-error: #b3261e;
+  --color-error-bg: #fdecea;
+  --color-success: #1e7a3c;
+  --color-success-bg: #eaf7ee;
+  --shadow-card: 0 1px 2px rgba(32, 28, 51, 0.04), 0 6px 16px rgba(32, 28, 51, 0.06);
+  --shadow-card-hover: 0 2px 4px rgba(32, 28, 51, 0.06), 0 10px 24px rgba(32, 28, 51, 0.1);
+  --radius: 14px;
+  --transition: 150ms ease;
+
+  display: block;
+  min-height: 100%;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+}
+
+.app-shell {
+  min-height: 100%;
+}
+
+.tab-nav {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem 1.25rem 0;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.tab-link {
+  display: inline-block;
+  padding: 0.7rem 1.4rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color var(--transition), border-color var(--transition);
+}
+
+.tab-link:hover {
+  color: var(--color-text);
+}
+
+.tab-link:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+  border-radius: 4px;
+}
+
+.tab-link.tab-active {
+  color: var(--color-accent-dark);
+  border-bottom-color: var(--color-accent);
+}

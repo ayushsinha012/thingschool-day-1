@@ -1,0 +1,87 @@
+<div class="page">
+  <header class="page-header">
+    <p class="kicker">Day 15 &middot; HttpClient + interceptors</p>
+    <h1>HTTP Lab</h1>
+    <p class="subtitle">
+      Same GET /api/quotes and GET /api/quotes/{{ '{id}' }} endpoints as Explore, routed through
+      three functional interceptors: auth header, retry-with-backoff on idempotent GETs, and
+      ProblemDetails/ValidationProblemDetails &rarr; typed AppError mapping.
+    </p>
+  </header>
+
+  <section class="controls" aria-label="Query controls">
+    <label for="page-input">Page</label>
+    <input id="page-input" #pageInput type="number" min="0" [value]="page()" (change)="page.set(pageInput.valueAsNumber)" />
+
+    <label for="size-input">Size</label>
+    <input id="size-input" #sizeInput type="number" min="1" max="100" [value]="size()" (change)="size.set(sizeInput.valueAsNumber)" />
+
+    <button type="button" class="primary-button" (click)="load()">Load quotes</button>
+    <button type="button" class="demo-button" (click)="triggerInvalidPagination()">
+      Trigger 400 (page=0)
+    </button>
+    <button type="button" class="demo-button" (click)="triggerMissingQuote()">
+      Trigger 404 (missing quote)
+    </button>
+  </section>
+
+  @if (retryStatus(); as status) {
+    <div class="retry-banner" role="status">
+      Retrying request&hellip; attempt {{ status.attempt }} of {{ status.maxAttempts }}
+    </div>
+  }
+
+  <section class="results" aria-label="Quote list result" aria-live="polite">
+    @switch (viewState()) {
+      @case ('idle') {
+        <p class="state-note">Press &ldquo;Load quotes&rdquo; to call GET /api/quotes.</p>
+      }
+      @case ('loading') {
+        <p class="state-note" role="status">Loading&hellip;</p>
+      }
+      @case ('error') {
+        @if (appError(); as err) {
+          <div class="state-panel error-panel" role="alert">
+            <p class="state-title">{{ err.friendlyMessage }}</p>
+            <p class="state-meta">kind: {{ err.kind }} &middot; status: {{ err.status }}</p>
+            @if (err.fieldErrors) {
+              <ul class="field-errors">
+                @for (entry of objectEntries(err.fieldErrors); track entry[0]) {
+                  <li><strong>{{ entry[0] }}:</strong> {{ entry[1].join(' ') }}</li>
+                }
+              </ul>
+            }
+            <button type="button" class="retry-button" (click)="resetAndLoad()">Reset to page 1 &amp; retry</button>
+          </div>
+        }
+      }
+      @case ('empty') {
+        <p class="state-note">No quotes on this page.</p>
+      }
+      @case ('success') {
+        <ul class="quote-list">
+          @for (quote of quotes(); track quote.id) {
+            <li>&ldquo;{{ quote.text }}&rdquo; &mdash; {{ quote.author }}</li>
+          }
+        </ul>
+        <p class="state-meta">page {{ page() }} &middot; {{ total() }} total</p>
+      }
+    }
+  </section>
+
+  <section class="results" aria-label="Quote detail result" aria-live="polite">
+    <h2 class="section-title">Detail lookup</h2>
+    @if (detailLoading()) {
+      <p class="state-note" role="status">Loading&hellip;</p>
+    } @else if (detailError(); as err) {
+      <div class="state-panel error-panel" role="alert">
+        <p class="state-title">{{ err.friendlyMessage }}</p>
+        <p class="state-meta">kind: {{ err.kind }} &middot; status: {{ err.status }}</p>
+      </div>
+    } @else if (detail(); as d) {
+      <p class="state-note">{{ d.display }}</p>
+    } @else {
+      <p class="state-note">Press &ldquo;Trigger 404&rdquo; to call GET /api/quotes/999999.</p>
+    }
+  </section>
+</div>
