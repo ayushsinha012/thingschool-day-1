@@ -1,0 +1,19 @@
+{
+  "FilePath": "/home/ayush/Desktop/thingschool/Day-17/quotes-bff/QuotesBff.csproj",
+  "Configuration": {
+    "ConfigurationName": "MVC-3.0",
+    "LanguageVersion": "6.0",
+    "Extensions": [
+      {
+        "ExtensionName": "MVC-3.0"
+      }
+    ]
+  },
+  "ProjectWorkspaceState": {
+    "TagHelpers": [],
+    "CSharpLanguageVersion": 1000
+  },
+  "RootNamespace": "QuotesBff",
+  "Documents": [],
+  "SerializationFormat": "0.2"
+}

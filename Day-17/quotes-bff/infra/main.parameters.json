@@ -1,0 +1,30 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "environmentName": {
+        "value": "${AZURE_ENV_NAME}"
+      },
+      "location": {
+        "value": "${AZURE_LOCATION}"
+      },
+      "resourceGroupName": {
+        "value": "${AZURE_RESOURCE_GROUP=thinkschool-rg}"
+      },
+      "containerAppsEnvironmentName": {
+        "value": "${AZURE_CONTAINER_APPS_ENVIRONMENT_NAME=thinkschool-env}"
+      },
+      "containerRegistryName": {
+        "value": "${AZURE_CONTAINER_REGISTRY_NAME=cr2i2oapij4zsrc}"
+      },
+      "quotesBffExists": {
+        "value": "${SERVICE_QUOTES_BFF_RESOURCE_EXISTS=false}"
+      },
+      "principalId": {
+        "value": "${AZURE_PRINCIPAL_ID}"
+      },
+      "principalType": {
+        "value": "${AZURE_PRINCIPAL_TYPE}"
+      }
+    }
+}

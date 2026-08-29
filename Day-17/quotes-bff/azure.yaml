@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+name: quotes-bff
+metadata:
+    template: azd-init@1.31.1
+services:
+    quotes-bff:
+        project: .
+        host: containerapp
+        language: dotnet
+resources:
+    quotes-bff:
+        type: host.containerapp
+        port: 8080
+hooks:
+    # Grants this Container App's system-assigned Managed Identity the
+    # quotes-api-day17 Entra app registration's "Api.Invoke" application role
+    # (see infra/grant-api-invoke-role.sh for why this can't be a Bicep
+    # resource, and result.md for the values it uses). Not run as part of Day
+    # 17 Part 3 - see that script's own header comment.
+    postprovision:
+        shell: sh
+        run: infra/grant-api-invoke-role.sh

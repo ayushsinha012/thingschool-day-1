@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "dgSpecHash": "y3W17tpvad8=",
+  "success": true,
+  "projectFilePath": "/home/ayush/Desktop/thingschool/Day-17/quotes-bff/QuotesBff.csproj",
+  "expectedPackageFiles": [
+    "/home/ayush/.nuget/packages/azure.core/1.44.1/azure.core.1.44.1.nupkg.sha512",
+    "/home/ayush/.nuget/packages/azure.identity/1.13.2/azure.identity.1.13.2.nupkg.sha512",
+    "/home/ayush/.nuget/packages/microsoft.bcl.asyncinterfaces/6.0.0/microsoft.bcl.asyncinterfaces.6.0.0.nupkg.sha512",
+    "/home/ayush/.nuget/packages/microsoft.identity.client/4.67.2/microsoft.identity.client.4.67.2.nupkg.sha512",
+    "/home/ayush/.nuget/packages/microsoft.identity.client.extensions.msal/4.67.2/microsoft.identity.client.extensions.msal.4.67.2.nupkg.sha512",
+    "/home/ayush/.nuget/packages/microsoft.identitymodel.abstractions/6.35.0/microsoft.identitymodel.abstractions.6.35.0.nupkg.sha512",
+    "/home/ayush/.nuget/packages/system.clientmodel/1.1.0/system.clientmodel.1.1.0.nupkg.sha512",
+    "/home/ayush/.nuget/packages/system.memory.data/6.0.0/system.memory.data.6.0.0.nupkg.sha512",
+    "/home/ayush/.nuget/packages/system.security.cryptography.protecteddata/4.5.0/system.security.cryptography.protecteddata.4.5.0.nupkg.sha512"
+  ],
+  "logs": []
+}

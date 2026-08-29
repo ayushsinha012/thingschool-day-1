@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>QuotesBff</RootNamespace>
+
+    <!-- Same reasoning as QuotesApi's own csproj (day-1/QuotesApi/QuotesApi.csproj):
+         azd's `dotnet publish` for a containerapp/dotnet service passes
+         `-r linux-x64` unconditionally, so the base image and RuntimeIdentifier
+         are aligned to glibc/linux-x64 up front rather than discovered the hard
+         way after a CrashLoopBackOff. This service has no native (SQLite-style)
+         dependencies, so the mismatch that bit QuotesApi specifically can't recur
+         here, but there is no reason to publish a musl image that azd will never
+         actually produce. -->
+    <ContainerBaseImage>mcr.microsoft.com/dotnet/aspnet:10.0</ContainerBaseImage>
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+    <ContainerImageTag>0.1.0</ContainerImageTag>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The only dependency this proxy needs beyond the ASP.NET Core shared
+         framework: DefaultAzureCredential, so token acquisition resolves to
+         the Container App's system-assigned Managed Identity in Azure (and to
+         the developer's own `az login` session locally) with no secret ever
+         stored by this process. See Program.cs. -->
+    <PackageReference Include="Azure.Identity" Version="1.13.2" />
+  </ItemGroup>
+
+</Project>
