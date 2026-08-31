@@ -1,0 +1,59 @@
+<div class="app-shell">
+  <nav class="tab-nav" aria-label="Primary">
+    <div class="tab-links">
+      <a
+        routerLink="/explore"
+        routerLinkActive="tab-active"
+        [ariaCurrentWhenActive]="'page'"
+        class="tab-link"
+      >
+        Explore
+      </a>
+      <a
+        routerLink="/create"
+        routerLinkActive="tab-active"
+        [ariaCurrentWhenActive]="'page'"
+        class="tab-link"
+      >
+        Create
+      </a>
+      <a
+        routerLink="/create-signal"
+        routerLinkActive="tab-active"
+        [ariaCurrentWhenActive]="'page'"
+        class="tab-link"
+      >
+        Create (Signal Form)
+      </a>
+      <a
+        routerLink="/http-lab"
+        routerLinkActive="tab-active"
+        [ariaCurrentWhenActive]="'page'"
+        class="tab-link"
+      >
+        HTTP Lab
+      </a>
+      <a
+        routerLink="/jobs"
+        routerLinkActive="tab-active"
+        [ariaCurrentWhenActive]="'page'"
+        class="tab-link"
+      >
+        Background Jobs
+      </a>
+    </div>
+
+    <div class="auth-status">
+      @if (isLoggedIn()) {
+        <button type="button" class="auth-button" (click)="logout()">Log out</button>
+      } @else {
+        <a routerLink="/login" routerLinkActive="tab-active" class="auth-link">Log in</a>
+        <a routerLink="/signup" routerLinkActive="tab-active" class="auth-link auth-link-primary">Sign up</a>
+      }
+    </div>
+  </nav>
+
+  <main>
+    <router-outlet></router-outlet>
+  </main>
+</div>

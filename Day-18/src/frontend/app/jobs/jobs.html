@@ -1,0 +1,137 @@
+<div class="page">
+  <header class="page-header">
+    <p class="kicker">Day 18 &middot; Background jobs</p>
+    <h1>Background Jobs</h1>
+    <p class="subtitle">
+      POST /api/jobs enqueues work onto a Channel&lt;T&gt;-backed queue and returns immediately.
+      A BackgroundService (BackgroundJobWorker) drains that queue off the request thread. Enqueue
+      a job below and watch it move Queued &rarr; Running &rarr; Completed/Failed while the request
+      that started it has already finished.
+    </p>
+  </header>
+
+  <section class="controls" aria-label="Enqueue a job">
+    <div class="control-row">
+      <label for="label-input">Label</label>
+      <input
+        id="label-input"
+        type="text"
+        [maxLength]="maxLabelLength"
+        [ngModel]="label()"
+        (ngModelChange)="label.set($event)"
+      />
+    </div>
+
+    <div class="control-row">
+      <label for="duration-input">Duration (s)</label>
+      <input
+        id="duration-input"
+        type="number"
+        [min]="minDuration"
+        [max]="maxDuration"
+        [ngModel]="durationSeconds()"
+        (ngModelChange)="durationSeconds.set($event)"
+      />
+    </div>
+
+    <label class="checkbox-row">
+      <input type="checkbox" [ngModel]="simulateFailure()" (ngModelChange)="simulateFailure.set($event)" />
+      Simulate failure
+    </label>
+
+    <button type="button" class="primary-button" [disabled]="enqueueing()" (click)="enqueue()">
+      @if (enqueueing()) {
+        Enqueuing&hellip;
+      } @else {
+        Enqueue job
+      }
+    </button>
+  </section>
+
+  <section class="results" aria-label="Enqueue result" aria-live="polite">
+    @if (lastRequestMs(); as ms) {
+      <p class="request-timing">
+        &#9889; POST /api/jobs returned in <strong>{{ ms }}ms</strong> &mdash; the background work
+        (up to {{ durationSeconds() }}s) had not started yet. Watch the table below for its progress.
+      </p>
+    }
+    @if (enqueueError(); as err) {
+      <div class="state-panel error-panel" role="alert">
+        <p class="state-title">{{ err.friendlyMessage }}</p>
+        <p class="state-meta">kind: {{ err.kind }} &middot; status: {{ err.status }}</p>
+      </div>
+    }
+  </section>
+
+  <section class="results" aria-label="Recent jobs" aria-live="polite">
+    <h2 class="section-title">
+      Recent jobs
+      @if (hasActiveJobs()) {
+        <span class="polling-note" role="status">&middot; polling every 1.2s&hellip;</span>
+      }
+    </h2>
+
+    @if (!jobsLoaded()) {
+      <p class="state-note" role="status">Loading&hellip;</p>
+    } @else if (jobs().length === 0) {
+      <p class="state-note">No jobs yet &mdash; enqueue one above.</p>
+    } @else {
+      <div class="table-scroll">
+        <table class="jobs-table">
+          <thead>
+            <tr>
+              <th scope="col">Label</th>
+              <th scope="col">Status</th>
+              <th scope="col">Created</th>
+              <th scope="col">Detail</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (job of jobs(); track job.id) {
+              <tr [class.highlight-row]="job.id === lastEnqueuedId()">
+                <td>{{ job.label }}</td>
+                <td><span [class]="statusClass(job.status)">{{ job.status }}</span></td>
+                <td class="mono">{{ job.createdAt | date: 'HH:mm:ss' }}</td>
+                <td>
+                  @if (job.status === 'Failed' && job.error) {
+                    <span class="error-detail">{{ job.error }}</span>
+                  } @else if (job.status === 'Completed' && job.completedAt) {
+                    <span class="state-meta">done {{ job.completedAt | date: 'HH:mm:ss' }}</span>
+                  } @else if (job.status === 'Running' && job.startedAt) {
+                    <span class="state-meta">started {{ job.startedAt | date: 'HH:mm:ss' }}</span>
+                  } @else {
+                    <span class="state-meta">waiting for a worker</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
+  <section class="results comparison" aria-label="BackgroundService vs IHostedService vs Hangfire">
+    <h2 class="section-title">BackgroundService vs IHostedService vs Hangfire</h2>
+    <dl>
+      <dt>BackgroundService</dt>
+      <dd>
+        Base class used above (BackgroundJobWorker) - override ExecuteAsync with a long-running
+        loop. Ideal for a queue consumer like this one.
+      </dd>
+      <dt>IHostedService</dt>
+      <dd>
+        The lower-level interface BackgroundService implements (StartAsync/StopAsync). Used
+        directly only when startup/shutdown need explicit control beyond one ExecuteAsync loop -
+        not needed here, so this app doesn't implement it directly.
+      </dd>
+      <dt>Hangfire</dt>
+      <dd>
+        Adds what the queue above doesn't have: persistence, retries, scheduling, and a dashboard.
+        This API runs one recurring job on it (purges finished job records older than 10 minutes,
+        every minute) -
+        <a [href]="hangfireDashboardUrl" target="_blank" rel="noopener">open the dashboard</a>.
+      </dd>
+    </dl>
+  </section>
+</div>
