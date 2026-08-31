@@ -63,7 +63,32 @@ Managed Identity on a Container App in a separate, inaccessible subscription)
 already holds the `Api.Invoke` role assignment - this project's naming and
 architecture mirrors that on purpose.
 
-## Deploying (not done yet - Day 17 Part 3 stops before this)
+## Deployment status
+
+**Deployed.** `quotes-bff` is live at
+`https://quotes-bff.politeocean-3efec37e.centralindia.azurecontainerapps.io`,
+running a real built image (not the placeholder), with its system-assigned
+Managed Identity verified end-to-end against the live QuotesApi (see
+`../result.md` §3 for the log evidence).
+
+The originally-planned path (`azd provision` then the `postprovision` hook
+below) hit `ContainerAppOperationError: Operation expired` on this specific
+Container App twice and never completed. It was brought up instead by:
+deleting the stuck resource, manually granting it the same `AcrPull` role
+the Bicep already declares, building and pushing the real image directly
+(`dotnet publish -r linux-x64 /t:PublishContainer`), and updating the
+Container App to that image - see `../result.md` §3 for the full sequence
+and why each step was needed.
+
+**Still open:** `infra/grant-api-invoke-role.sh` (step 2 below) fails with
+`Authorization_RequestDenied` under the current signed-in account, which
+holds no Entra directory admin role. It needs to be run by a tenant admin
+before any `RequireAuthorization`-protected QuotesApi endpoint is routed
+through this service's Managed-Identity path. Not required for the
+anonymous-read path that's live today (`GET /api/quotes` has no
+`RequireAuthorization` on it).
+
+## Deploying (for reference / a future redeploy)
 
 1. `azd provision` (or `azd up`) from this directory - creates the
    `quotes-bff` Container App in the existing `thinkschool-rg` /
@@ -73,6 +98,7 @@ architecture mirrors that on purpose.
    that identity the `Api.Invoke` role on `quotes-api-day17` via Microsoft
    Graph - ARM/Bicep has no native resource type for an Entra app role
    assignment, so this can't be done in `resources.bicep` itself.
-3. Once the real Static Web App origin is known (a later part), add it to
-   both this service's and QuotesApi's `Cors:ProductionOrigins` - neither
-   uses a wildcard.
+3. The real Static Web App origin
+   (`https://polite-mushroom-04dd5ce00.7.azurestaticapps.net`) is already
+   known and set in both this service's and QuotesApi's
+   `Cors:ProductionOrigins` - neither uses a wildcard.

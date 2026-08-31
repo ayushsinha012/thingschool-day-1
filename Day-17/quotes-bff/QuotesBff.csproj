@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -17,6 +17,7 @@
     <ContainerBaseImage>mcr.microsoft.com/dotnet/aspnet:10.0</ContainerBaseImage>
     <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
     <ContainerImageTag>0.1.0</ContainerImageTag>
+    <UserSecretsId>a6f11315-ecf8-42af-80e8-ee35bd8bec5a</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
