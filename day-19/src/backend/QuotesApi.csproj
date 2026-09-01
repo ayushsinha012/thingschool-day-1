@@ -1,0 +1,70 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>b4472236-47ac-4b0e-ad08-116d63b5e25e</UserSecretsId>
+
+    <!-- ContainerImageName is the obsolete alias for ContainerRepository (SDK
+         warning CONTAINER003) and, per Microsoft.NET.Build.Containers.targets,
+         unconditionally overwrites ContainerRepository even when azd supplies
+         it via -p:ContainerRepository on the command line - causing azd's
+         `dotnet publish -p:ContainerRepository=<service>/<service>-<env>`
+         convention to be silently ignored, so the pushed image landed at a
+         different repository path than the one the Container App revision
+         was configured to pull (ImagePullBackOff). Removed so ContainerRepository
+         resolves normally: azd's command-line value when it supplies one,
+         otherwise the SDK's own AssemblyName-based default. -->
+    <ContainerImageTag>0.1.0</ContainerImageTag>
+    <!-- Base image is glibc (Debian), matching linux-x64 below - see the
+         RuntimeIdentifier comment for why. This was previously the musl/
+         Alpine variant (mcr.microsoft.com/dotnet/aspnet:10.0-alpine) with
+         ContainerRuntimeIdentifier=linux-musl-x64, on the assumption that
+         ContainerRuntimeIdentifier also controlled which RID-specific native
+         assets (e.g. SQLitePCLRaw's e_sqlite3) get published. It does not:
+         that is governed solely by RuntimeIdentifier. azd's own `dotnet
+         publish` invocation for this containerapp/dotnet service
+         unconditionally passes `-r linux-x64` (confirmed - it does not read
+         ContainerRuntimeIdentifier, and a command-line -r always wins over
+         any RuntimeIdentifier set in the project), so the published image
+         always contained the glibc build of e_sqlite3 regardless of the
+         musl base image or RuntimeIdentifier override attempts - crashing
+         at startup with DllNotFoundException: Unable to load shared library
+         'e_sqlite3', confirmed via actual deployed container console logs
+         (CrashLoopBackOff). Aligning both the base image and RuntimeIdentifier
+         to glibc/linux-x64 - what azd actually deploys - resolves the
+         mismatch instead of fighting it. -->
+    <ContainerBaseImage>mcr.microsoft.com/dotnet/aspnet:10.0</ContainerBaseImage>
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Identity" Version="1.21.0" />
+    <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.20.2" />
+    <PackageReference Include="Azure.Monitor.OpenTelemetry.AspNetCore" Version="1.6.0" />
+    <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
+    <PackageReference Include="Hangfire.AspNetCore" Version="1.8.25" />
+    <PackageReference Include="Hangfire.InMemory" Version="1.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.10" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.10">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.10" />
+
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.10" />
+    <PackageReference Include="MediatR" Version="12.5.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+    <PackageReference Include="Serilog.Settings.Configuration" Version="9.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Tests.Domain/**/*.cs" />
+    <Compile Remove="Tests.Integration/**/*.cs" />
+    <Compile Remove="Migrations.SqlServer/**/*.cs" />
+  </ItemGroup>
+
+</Project>

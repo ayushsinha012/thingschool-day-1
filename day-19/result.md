@@ -20,6 +20,47 @@ and the UI — was built new for Day 19, reusing the existing `day-1/QuotesApi`
 backend, `Day-16/task-2` Angular app, `thinkschool-rg` resource group, and
 the existing `quotes-api` Container App's user-assigned managed identity.
 
+## Day-19 Files
+
+This organizational pass (Sep 1, 2026) copied the already-working Day-19
+source into `day-19/src/` — a documentation/review convenience mirroring
+`Day-18/src/` — without moving, deleting, or rewriting anything at its
+canonical path. Nothing below was newly created by that pass; every file was
+copied, unmodified, from where it already lived. See `README.md` "File
+Structure" for the full canonical-path ↔ copy table.
+
+- **Publisher** — `day-1/QuotesApi/Messaging/QuoteEventPublisher.cs` (+
+  `MessageIdResolver.cs`, `IQuoteEventPublisher.cs`, `PublishedEvent.cs`),
+  copied to `day-19/src/backend/Messaging/`.
+- **Consumers** — `day-1/QuotesApi/Messaging/SubscriptionWorker.cs`,
+  `SubscriptionAWorker.cs`, `SubscriptionBWorker.cs`, copied to
+  `day-19/src/backend/Messaging/`.
+- **Idempotency** — `day-1/QuotesApi/Messaging/QuoteEventProcessor.cs`,
+  `ProcessedMessage.cs`, `ProcessQuoteEventCommand.cs`,
+  `MessageProcessingOutcome.cs`, copied to `day-19/src/backend/Messaging/`;
+  the `ProcessedMessages` `DbSet`/mapping in `AppDbContext.cs` (shared file)
+  copied to `day-19/src/backend/Data/AppDbContext.cs`; the EF Core migration
+  pair copied to `day-19/src/backend/Migrations/` and
+  `day-19/src/backend/Migrations.SqlServer/`.
+- **DLQ handling** — `day-1/QuotesApi/Messaging/DeadLetterMessageSummary.cs`
+  and the dead-letter peek logic in `MessagingEndpoints.cs`, copied to
+  `day-19/src/backend/Messaging/` and `day-19/src/backend/Endpoints/`.
+- **Focused tests** — `day-1/QuotesApi/Tests.Domain/Messaging/*.cs` (2
+  files), copied to `day-19/src/backend/Tests.Domain/Messaging/`.
+- **Frontend UI** — `Day-16/task-2/src/app/messaging.ts`,
+  `messaging.service.ts`, and the `messaging/` component (ts/html/css/spec),
+  copied to `day-19/src/frontend/app/`.
+- **Route/navigation** — the `/messaging` entry in `app.routes.ts` and the
+  "Messaging" nav tab in `app.html` (both shared files, only the Day-19
+  hunk is relevant), copied to `day-19/src/frontend/app/`.
+- **Infrastructure** — no Bicep/ARM changes; the Service Bus namespace,
+  topic, and both subscriptions were created directly via
+  `az servicebus topic subscription create` (see "Two Subscriptions" above),
+  and RBAC was granted via `az role assignment create` — both one-off `az`
+  CLI operations against existing resources, not files to copy. DI wiring
+  (`day-1/QuotesApi/Extensions/MessagingExtensions.cs`) is copied to
+  `day-19/src/backend/Extensions/`.
+
 ## Publisher
 
 `day-1/QuotesApi/Messaging/QuoteEventPublisher.cs` — sends to the topic
@@ -281,6 +322,20 @@ arrive before each capture:
 | 5 | `05-idempotency-duplicate.png` | After "Replay same MessageId" — `Duplicate` badges on both subscriptions, different worker slots than the original |
 | 6 | `06-poison-message.png` | After a poison publish — `PoisonFailed` rows, dead-letter counts incremented |
 | 7 | `07-dead-letter-queue.png` | "Peek dead letters" result — real `MaxDeliveryCountExceeded` reason |
+
+![Service Bus tab](docs/screenshots/01-service-bus-tab.png)
+
+![Publish message](docs/screenshots/02-publish-message.png)
+
+![Two subscriptions](docs/screenshots/03-two-subscriptions.png)
+
+![Competing consumer](docs/screenshots/04-competing-consumer.png)
+
+![Idempotency duplicate](docs/screenshots/05-idempotency-duplicate.png)
+
+![Poison message](docs/screenshots/06-poison-message.png)
+
+![Dead-letter queue](docs/screenshots/07-dead-letter-queue.png)
 
 Note: the scripted keystroke sequence used to fill the text inputs across
 consecutive captures didn't always clear the previous value first, so a few

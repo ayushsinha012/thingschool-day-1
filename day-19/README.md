@@ -65,9 +65,45 @@ workspace, next to `jobs/`:
 - `Day-16/task-2/src/app/app.routes.ts`, `app.html` — new `/messaging` route
   and nav tab
 
-Only documentation, evidence, and screenshots live under `day-19/` itself —
-putting the actual source there would have split the working ASP.NET Core
-and Angular projects apart and broken compilation.
+The canonical, live source stays where the app actually runs from — this
+folder additionally holds working copies of every Day-19-related file under
+`src/` (same approach as `Day-18/src/`), for anyone reviewing this submission
+without checking out the whole repo. See "File Structure" below.
+
+## File Structure
+
+Everything genuinely specific to Day 19 lives once, at its canonical path,
+and is also copied — unmodified — into `day-19/src/` so this folder is
+self-contained for review. **Edit the canonical path, not the copy** — the
+running app reads from `day-1/QuotesApi` and `Day-16/task-2`, not from here.
+
+| Canonical path | Copy in this folder | Dedicated to Day 19? |
+|---|---|---|
+| `day-1/QuotesApi/Messaging/*.cs` (19 files) | `src/backend/Messaging/` | Yes — new |
+| `day-1/QuotesApi/Endpoints/MessagingEndpoints.cs` | `src/backend/Endpoints/` | Yes — new |
+| `day-1/QuotesApi/Extensions/MessagingExtensions.cs` | `src/backend/Extensions/MessagingExtensions.cs` | Yes — new |
+| `day-1/QuotesApi/DTOs/MessagingRequests.cs` | `src/backend/DTOs/` | Yes — new |
+| `day-1/QuotesApi/Tests.Domain/Messaging/*.cs` (2 files) | `src/backend/Tests.Domain/Messaging/` | Yes — new |
+| `day-1/QuotesApi/Migrations/20260901054513_AddProcessedMessages{.cs,.Designer.cs}` | `src/backend/Migrations/` | Yes — new |
+| `day-1/QuotesApi/Migrations.SqlServer/Migrations/20260901054825_AddProcessedMessages{.cs,.Designer.cs}` | `src/backend/Migrations.SqlServer/` | Yes — new |
+| `day-1/QuotesApi/Data/AppDbContext.cs` | `src/backend/Data/AppDbContext.cs` | No — shared file; only the `ProcessedMessages` `DbSet` + its `OnModelCreating` block are Day-19's (the `Quote.Author` index nearby is unrelated) |
+| `day-1/QuotesApi/Extensions/InfrastructureExtensions.cs` | `src/backend/Extensions/InfrastructureExtensions.cs` | No — shared file; only the `services.AddMessaging(configuration)` call is Day-19's (the prod-CORS policy and `AddBackgroundJobs()` nearby are unrelated/Day-18) |
+| `day-1/QuotesApi/Program.cs` | `src/backend/Program.cs` | No — shared file; only `app.MapMessagingEndpoints()` is Day-19's |
+| `day-1/QuotesApi/QuotesApi.csproj` | `src/backend/QuotesApi.csproj` | No — shared project file; only the `Azure.Identity` and `Azure.Messaging.ServiceBus` `PackageReference`s were added for Day 19 |
+| `day-1/QuotesApi/appsettings.json` | `src/backend/appsettings.json` | No — shared config file; only the `ServiceBus` section is Day-19's (no secrets/connection strings — `FullyQualifiedNamespace` only, auth is `DefaultAzureCredential`) |
+| `Day-16/task-2/src/app/messaging.ts` | `src/frontend/app/messaging.ts` | Yes — new |
+| `Day-16/task-2/src/app/messaging.service.ts` | `src/frontend/app/messaging.service.ts` | Yes — new |
+| `Day-16/task-2/src/app/messaging/*` (4 files) | `src/frontend/app/messaging/` | Yes — new |
+| `Day-16/task-2/src/app/app.routes.ts` | `src/frontend/app/app.routes.ts` | No — shared file; only the `/messaging` lazy route is Day-19's (`/jobs`, `/login`, `/signup` nearby are unrelated) |
+| `Day-16/task-2/src/app/app.html` | `src/frontend/app/app.html` | No — shared file; only the "Messaging" nav tab is Day-19's (the "Background Jobs" tab and auth-status block nearby are unrelated) |
+
+Not copied — genuinely shared infrastructure outside the app's own project
+boundary, unrelated to the messaging feature itself: the Container App/Static
+Web App bicep under `day-1/QuotesApi/infra/` only changed for an unrelated
+production-CORS origin fix (no Service Bus resource is provisioned by Bicep —
+the topic and both subscriptions were created directly via
+`az servicebus topic subscription create`, documented in `result.md`
+"Two Subscriptions").
 
 ## Publisher
 
@@ -264,13 +300,19 @@ and the DLQ.
 Captured against the **live deployed app**
 (`https://polite-mushroom-04dd5ce00.7.azurestaticapps.net`), not localhost:
 
-- `docs/screenshots/01-service-bus-tab.png`
-- `docs/screenshots/02-publish-message.png`
-- `docs/screenshots/03-two-subscriptions.png`
-- `docs/screenshots/04-competing-consumer.png`
-- `docs/screenshots/05-idempotency-duplicate.png`
-- `docs/screenshots/06-poison-message.png`
-- `docs/screenshots/07-dead-letter-queue.png`
+![Service Bus tab](docs/screenshots/01-service-bus-tab.png)
+
+![Publish message](docs/screenshots/02-publish-message.png)
+
+![Two subscriptions](docs/screenshots/03-two-subscriptions.png)
+
+![Competing consumer](docs/screenshots/04-competing-consumer.png)
+
+![Idempotency duplicate](docs/screenshots/05-idempotency-duplicate.png)
+
+![Poison message](docs/screenshots/06-poison-message.png)
+
+![Dead-letter queue](docs/screenshots/07-dead-letter-queue.png)
 
 ## What Would Break
 

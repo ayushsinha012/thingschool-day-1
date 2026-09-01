@@ -1,0 +1,219 @@
+<div class="page">
+  <header class="page-header">
+    <p class="kicker">Day 19 &middot; Service Bus topics + DLQ</p>
+    <h1>Messaging</h1>
+    <p class="subtitle">
+      POST /api/messaging/publish sends one message to the quote-events topic. Two subscriptions
+      (sub-audit, sub-notifications) each get their own independent copy &mdash; fan-out, not
+      competing consumers. Within each subscription, two concurrent worker slots compete for
+      messages and every handler dedupes on MessageId before doing any work.
+    </p>
+  </header>
+
+  <section class="controls" aria-label="Publish a message">
+    <div class="control-row">
+      <label for="event-type-input">Event type</label>
+      <input
+        id="event-type-input"
+        type="text"
+        [maxLength]="maxEventTypeLength"
+        [ngModel]="eventType()"
+        (ngModelChange)="eventType.set($event)"
+      />
+    </div>
+
+    <div class="control-row">
+      <label for="payload-input">Payload</label>
+      <input
+        id="payload-input"
+        type="text"
+        [maxLength]="maxPayloadLength"
+        [ngModel]="payload()"
+        (ngModelChange)="payload.set($event)"
+      />
+    </div>
+
+    <div class="control-row">
+      <label for="idempotency-input">Idempotency key</label>
+      <input
+        id="idempotency-input"
+        type="text"
+        placeholder="blank = new MessageId each publish"
+        [ngModel]="idempotencyKey()"
+        (ngModelChange)="idempotencyKey.set($event)"
+      />
+    </div>
+
+    <label class="checkbox-row">
+      <input type="checkbox" [ngModel]="poison()" (ngModelChange)="poison.set($event)" />
+      Simulate poison message (always fails processing)
+    </label>
+
+    <div class="button-row">
+      <button type="button" class="primary-button" [disabled]="publishing()" (click)="publish()">
+        @if (publishing()) {
+          Publishing&hellip;
+        } @else {
+          Publish
+        }
+      </button>
+
+      <button
+        type="button"
+        class="secondary-button"
+        [disabled]="publishing() || !lastPublished()"
+        (click)="replayLastMessage()"
+      >
+        Replay same MessageId
+      </button>
+    </div>
+  </section>
+
+  <section class="results" aria-label="Publish result" aria-live="polite">
+    @if (lastPublished(); as published) {
+      <p class="request-timing">
+        &#9889; Published MessageId <strong class="mono">{{ published.messageId }}</strong>
+        ({{ published.eventType }}@if (published.poison) {, poison}) to topic quote-events.
+      </p>
+    }
+    @if (publishError(); as err) {
+      <div class="state-panel error-panel" role="alert">
+        <p class="state-title">{{ err.friendlyMessage }}</p>
+        <p class="state-meta">kind: {{ err.kind }} &middot; status: {{ err.status }}</p>
+      </div>
+    }
+  </section>
+
+  <section class="results" aria-label="Subscriptions">
+    <h2 class="section-title">Subscriptions</h2>
+
+    @if (!topologyLoaded()) {
+      <p class="state-note" role="status">Loading&hellip;</p>
+    } @else {
+      <div class="subscription-grid">
+        @for (sub of topology(); track sub.name) {
+          <div class="subscription-card">
+            <p class="subscription-name">{{ sub.name }}</p>
+            <dl>
+              <dt>Active</dt>
+              <dd>{{ sub.activeMessageCount }}</dd>
+              <dt>Dead-lettered</dt>
+              <dd [class.dlq-nonzero]="sub.deadLetterMessageCount > 0">{{ sub.deadLetterMessageCount }}</dd>
+              <dt>Total</dt>
+              <dd>{{ sub.totalMessageCount }}</dd>
+            </dl>
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <section class="results" aria-label="Consumer activity" aria-live="polite">
+    <h2 class="section-title">
+      Consumer activity
+      <span class="polling-note" role="status">&middot; polling every 1.5s&hellip;</span>
+    </h2>
+
+    @if (!activityLoaded()) {
+      <p class="state-note" role="status">Loading&hellip;</p>
+    } @else if (activity().length === 0) {
+      <p class="state-note">No activity yet &mdash; publish a message above.</p>
+    } @else {
+      <div class="table-scroll">
+        <table class="activity-table">
+          <thead>
+            <tr>
+              <th scope="col">Time</th>
+              <th scope="col">Subscription</th>
+              <th scope="col">Worker</th>
+              <th scope="col">MessageId</th>
+              <th scope="col">Outcome</th>
+              <th scope="col">Delivery</th>
+              <th scope="col">Detail</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of activity(); track entry.timestampUtc + entry.subscriptionName + entry.outcome) {
+              <tr>
+                <td class="mono">{{ entry.timestampUtc | date: 'HH:mm:ss.SSS' }}</td>
+                <td>{{ entry.subscriptionName }}</td>
+                <td class="mono">{{ entry.workerSlot }}</td>
+                <td class="mono">{{ entry.messageId }}</td>
+                <td><span [class]="outcomeClass(entry.outcome)">{{ entry.outcome }}</span></td>
+                <td>{{ entry.deliveryCount }}</td>
+                <td class="state-meta">{{ entry.detail || '&mdash;' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
+  <section class="results" aria-label="Dead-letter queue">
+    <h2 class="section-title">Dead-letter queue</h2>
+    <p class="state-meta">
+      MaxDeliveryCount is 3 on both subscriptions. A poison message fails three deliveries, then
+      Service Bus moves it to that subscription's DLQ automatically.
+    </p>
+
+    <div class="control-row">
+      <label for="dlq-subscription-select">Subscription</label>
+      <select
+        id="dlq-subscription-select"
+        [ngModel]="selectedDlqSubscription()"
+        (ngModelChange)="selectedDlqSubscription.set($event)"
+      >
+        @for (sub of subscriptions; track sub) {
+          <option [value]="sub">{{ sub }}</option>
+        }
+      </select>
+
+      <button type="button" class="secondary-button" [disabled]="dlqLoading()" (click)="peekDeadLetters()">
+        @if (dlqLoading()) {
+          Peeking&hellip;
+        } @else {
+          Peek dead letters
+        }
+      </button>
+    </div>
+
+    @if (dlqError(); as err) {
+      <div class="state-panel error-panel" role="alert">
+        <p class="state-title">{{ err.friendlyMessage }}</p>
+        <p class="state-meta">kind: {{ err.kind }} &middot; status: {{ err.status }}</p>
+      </div>
+    }
+
+    @if (dlqLoaded() && !dlqError()) {
+      @if (deadLetters().length === 0) {
+        <p class="state-note">No dead-lettered messages on {{ selectedDlqSubscription() }}.</p>
+      } @else {
+        <div class="table-scroll">
+          <table class="activity-table">
+            <thead>
+              <tr>
+                <th scope="col">MessageId</th>
+                <th scope="col">Event type</th>
+                <th scope="col">Delivery count</th>
+                <th scope="col">Reason</th>
+                <th scope="col">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (message of deadLetters(); track message.messageId) {
+                <tr>
+                  <td class="mono">{{ message.messageId }}</td>
+                  <td>{{ message.eventType }}</td>
+                  <td>{{ message.deliveryCount }}</td>
+                  <td>{{ message.deadLetterReason }}</td>
+                  <td class="state-meta">{{ message.deadLetterErrorDescription }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  </section>
+</div>
