@@ -1,0 +1,80 @@
+<div class="page">
+  <header class="page-header">
+    <p class="kicker">Day 20 &middot; Transactional outbox</p>
+    <h1>Outbox</h1>
+    <p class="subtitle">
+      Creating a quote writes the quote row and an outbox row in one EF transaction. A separate
+      relay polls unsent rows, publishes each to the quote-events topic, and marks SentAt only
+      after the publish succeeds &mdash; at-least-once delivery, deduplicated by MessageId on the
+      Day 19 consumer.
+    </p>
+  </header>
+
+  <section class="results" aria-label="Relay status">
+    <h2 class="section-title">
+      Relay status
+      <span class="polling-note" role="status">&middot; polling every 2s&hellip;</span>
+    </h2>
+
+    @if (!loaded()) {
+      <p class="state-note" role="status">Loading&hellip;</p>
+    } @else if (loadError(); as err) {
+      <div class="state-panel error-panel" role="alert">
+        <p class="state-title">{{ err.friendlyMessage }}</p>
+        <p class="state-meta">kind: {{ err.kind }} &middot; status: {{ err.status }}</p>
+      </div>
+    } @else if (status(); as relayStatus) {
+      <dl class="status-grid">
+        <dt>Last run</dt>
+        <dd class="mono">
+          {{ relayStatus.lastRunAtUtc ? (relayStatus.lastRunAtUtc | date: 'HH:mm:ss') : 'not run yet' }}
+        </dd>
+        <dt>Last batch published</dt>
+        <dd>{{ relayStatus.lastPublishedCount }}</dd>
+        <dt>Last error</dt>
+        <dd [class.dlq-nonzero]="relayStatus.lastError">{{ relayStatus.lastError || 'none' }}</dd>
+      </dl>
+    }
+  </section>
+
+  <section class="results" aria-label="Outbox messages">
+    <h2 class="section-title">Outbox messages</h2>
+
+    @if (!loaded()) {
+      <p class="state-note" role="status">Loading&hellip;</p>
+    } @else if (loadError()) {
+      <p class="state-note">Could not load outbox messages.</p>
+    } @else if (messages().length === 0) {
+      <p class="state-note">No outbox messages yet &mdash; create a quote to write one.</p>
+    } @else {
+      <div class="table-scroll">
+        <table class="activity-table">
+          <thead>
+            <tr>
+              <th scope="col">Created</th>
+              <th scope="col">MessageId</th>
+              <th scope="col">Type</th>
+              <th scope="col">State</th>
+              <th scope="col">Sent</th>
+              <th scope="col">Attempts</th>
+              <th scope="col">Last error</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (message of messages(); track message.id) {
+              <tr>
+                <td class="mono">{{ message.createdAt | date: 'HH:mm:ss' }}</td>
+                <td class="mono">{{ message.messageId }}</td>
+                <td>{{ message.messageType }}</td>
+                <td><span [class]="stateClass(message)">{{ message.sentAt ? 'Sent' : 'Pending' }}</span></td>
+                <td class="mono">{{ message.sentAt ? (message.sentAt | date: 'HH:mm:ss') : '&mdash;' }}</td>
+                <td>{{ message.attemptCount }}</td>
+                <td class="state-meta">{{ message.lastError || '&mdash;' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</div>
