@@ -1,0 +1,55 @@
+This is ApacheBench, Version 2.3 <$Revision: 1903618 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking localhost (be patient)
+Completed 200 requests
+Completed 400 requests
+Completed 600 requests
+Completed 800 requests
+Completed 1000 requests
+Completed 1200 requests
+Completed 1400 requests
+Completed 1600 requests
+Completed 1800 requests
+Completed 2000 requests
+Finished 2000 requests
+
+
+Server Software:        Kestrel
+Server Hostname:        localhost
+Server Port:            5062
+
+Document Path:          /api/quotes/1
+Document Length:        176 bytes
+
+Concurrency Level:      20
+Time taken for tests:   1.352 seconds
+Complete requests:      2000
+Failed requests:        0
+Total transferred:      630000 bytes
+HTML transferred:       352000 bytes
+Requests per second:    1478.96 [#/sec] (mean)
+Time per request:       13.523 [ms] (mean)
+Time per request:       0.676 [ms] (mean, across all concurrent requests)
+Transfer rate:          454.95 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    1   0.9      0       8
+Processing:     2   13   9.9     10      78
+Waiting:        0   12   9.8      9      77
+Total:          2   13  10.1     10      81
+WARNING: The median and mean for the initial connection time are not within a normal deviation
+        These results are probably not that reliable.
+
+Percentage of the requests served within a certain time (ms)
+  50%     10
+  66%     14
+  75%     17
+  80%     19
+  90%     25
+  95%     32
+  98%     46
+  99%     57
+ 100%     81 (longest request)
