@@ -1,0 +1,47 @@
+[09:42:57.048 INF] Microsoft.Hosting.Lifetime: Now listening on: http://localhost:5080
+[09:42:57.064 INF] Microsoft.Hosting.Lifetime: Application started. Press Ctrl+C to shut down.
+[09:42:57.064 INF] Microsoft.Hosting.Lifetime: Hosting environment: Production
+[09:42:57.064 INF] Microsoft.Hosting.Lifetime: Content root path: /home/ayush/Desktop/thingschool/day-22/src/ResilienceDemo
+[09:42:57.619 INF] Downstream: downstream request id=1 mode=Healthy
+[09:42:57.641 INF] ResilienceDemo.Client.OutboundDependencyClient: call succeeded status=200
+[09:42:57.743 INF] Downstream: downstream request id=1 mode=Failing
+[09:42:57.760 WRN] ResiliencePipeline: retry attempt=1 delay=233.5037ms reason=HTTP 503
+[09:42:57.996 INF] Downstream: downstream request id=1 mode=Failing
+[09:42:57.996 WRN] ResiliencePipeline: retry attempt=2 delay=179.8417ms reason=HTTP 503
+[09:42:58.177 INF] Downstream: downstream request id=1 mode=Failing
+[09:42:58.185 ERR] ResiliencePipeline: circuit state=Open breakDuration=5000ms lastReason=HTTP 503
+[09:42:58.186 WRN] ResiliencePipeline: retry attempt=3 delay=635.0855ms reason=HTTP 503
+[09:42:58.826 WRN] ResilienceDemo.Client.OutboundDependencyClient: call rejected reason=circuit-open
+[09:42:58.853 WRN] ResilienceDemo.Client.OutboundDependencyClient: call rejected reason=circuit-open
+[09:42:58.872 WRN] ResilienceDemo.Client.OutboundDependencyClient: call rejected reason=circuit-open
+[09:42:58.892 WRN] ResilienceDemo.Client.OutboundDependencyClient: call rejected reason=circuit-open
+[09:42:58.915 WRN] ResilienceDemo.Client.OutboundDependencyClient: call rejected reason=circuit-open
+[09:42:58.959 WRN] ResilienceDemo.Client.OutboundDependencyClient: call rejected reason=circuit-open
+[09:43:04.539 WRN] ResiliencePipeline: circuit state=HalfOpen reason=probing downstream after break duration
+[09:43:04.541 INF] Downstream: downstream request id=1 mode=Healthy
+[09:43:04.543 INF] ResiliencePipeline: circuit state=Closed reason=probe succeeded, downstream recovered
+[09:43:04.543 INF] ResilienceDemo.Client.OutboundDependencyClient: call succeeded status=200
+[09:43:04.660 INF] Downstream: downstream event write mode=Slow
+[09:43:05.472 WRN] ResiliencePipeline: timeout after=800ms
+[09:43:05.481 WRN] ResilienceDemo.Client.OutboundDependencyClient: call rejected reason=timeout
+[09:43:05.579 INF] Downstream: downstream request id=2 mode=Slow
+[09:43:05.579 INF] Downstream: downstream request id=1 mode=Slow
+[09:43:05.580 INF] Downstream: downstream request id=0 mode=Slow
+[09:43:05.580 WRN] ResiliencePipeline: bulkhead rejected permitLimit=3 queueLimit=2
+[09:43:05.584 WRN] ResilienceDemo.Client.OutboundDependencyClient: call rejected reason=bulkhead-full
+[09:43:05.584 WRN] ResiliencePipeline: bulkhead rejected permitLimit=3 queueLimit=2
+[09:43:05.585 WRN] ResilienceDemo.Client.OutboundDependencyClient: call rejected reason=bulkhead-full
+[09:43:05.585 WRN] ResiliencePipeline: bulkhead rejected permitLimit=3 queueLimit=2
+[09:43:05.586 WRN] ResilienceDemo.Client.OutboundDependencyClient: call rejected reason=bulkhead-full
+[09:43:05.587 WRN] ResiliencePipeline: bulkhead rejected permitLimit=3 queueLimit=2
+[09:43:05.588 WRN] ResilienceDemo.Client.OutboundDependencyClient: call rejected reason=bulkhead-full
+[09:43:05.588 WRN] ResiliencePipeline: bulkhead rejected permitLimit=3 queueLimit=2
+[09:43:05.589 WRN] ResilienceDemo.Client.OutboundDependencyClient: call rejected reason=bulkhead-full
+[09:43:06.082 INF] ResilienceDemo.Client.OutboundDependencyClient: call succeeded status=200
+[09:43:06.082 INF] ResilienceDemo.Client.OutboundDependencyClient: call succeeded status=200
+[09:43:06.082 INF] ResilienceDemo.Client.OutboundDependencyClient: call succeeded status=200
+[09:43:06.083 INF] Downstream: downstream request id=4 mode=Slow
+[09:43:06.083 INF] Downstream: downstream request id=3 mode=Slow
+[09:43:06.584 INF] ResilienceDemo.Client.OutboundDependencyClient: call succeeded status=200
+[09:43:06.584 INF] ResilienceDemo.Client.OutboundDependencyClient: call succeeded status=200
+[09:43:06.669 INF] Microsoft.Hosting.Lifetime: Application is shutting down...

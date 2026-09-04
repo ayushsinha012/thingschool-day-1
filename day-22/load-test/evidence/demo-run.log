@@ -1,0 +1,45 @@
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:02.46
+[04:12:55.063] starting ResilienceDemo
+[04:12:57.364] app ready pid=15475
+[04:12:57.368] === SCENARIO A: healthy request ===
+[04:12:57.398] POST /demo/reset -> http=204 elapsed=16ms body=
+[04:12:57.464] POST /downstream/control -> http=200 elapsed=56ms body={"mode":"Healthy","delayMs":0}
+[04:12:57.665] GET /demo/get/1 -> http=200 elapsed=193ms body={"outcome":"Success","statusCode":200,"detail":"ok"}
+[04:12:57.692] GET /demo/status -> http=200 elapsed=15ms body={"circuitState":"Closed","downstreamMode":"Healthy","counters":{"successes":1,"failures":0,"retryAttempts":0,"timeouts":0,"bulkheadRejections":0,"circuitShortCircuited":0}}
+[04:12:57.695] === SCENARIO B: sustained failure -> circuit opens ===
+[04:12:57.713] POST /demo/reset -> http=204 elapsed=11ms body=
+[04:12:57.732] POST /downstream/control -> http=200 elapsed=11ms body={"mode":"Failing","delayMs":0}
+[04:12:58.842] GET /demo/get/1 -> http=503 elapsed=1097ms body={"outcome":"CircuitOpen","statusCode":null,"detail":"circuit open, failed fast"}
+[04:12:58.862] GET /demo/get/2 -> http=503 elapsed=12ms body={"outcome":"CircuitOpen","statusCode":null,"detail":"circuit open, failed fast"}
+[04:12:58.881] GET /demo/get/3 -> http=503 elapsed=11ms body={"outcome":"CircuitOpen","statusCode":null,"detail":"circuit open, failed fast"}
+[04:12:58.903] GET /demo/get/4 -> http=503 elapsed=12ms body={"outcome":"CircuitOpen","statusCode":null,"detail":"circuit open, failed fast"}
+[04:12:58.928] GET /demo/get/5 -> http=503 elapsed=12ms body={"outcome":"CircuitOpen","statusCode":null,"detail":"circuit open, failed fast"}
+[04:12:58.947] GET /demo/status -> http=200 elapsed=11ms body={"circuitState":"Open","downstreamMode":"Failing","counters":{"successes":0,"failures":5,"retryAttempts":3,"timeouts":0,"bulkheadRejections":0,"circuitShortCircuited":5}}
+[04:12:58.949] extra call while circuit should be OPEN (expect fast fail, no downstream hit)
+[04:12:58.968] GET /demo/get/99 -> http=503 elapsed=11ms body={"outcome":"CircuitOpen","statusCode":null,"detail":"circuit open, failed fast"}
+[04:12:58.991] GET /downstream/control -> http=200 elapsed=15ms body={"mode":"Failing","delayMs":0,"requestCount":3}
+[04:12:58.993] === SCENARIO C: recovery OPEN -> HALF-OPEN -> CLOSED ===
+[04:12:59.014] POST /downstream/control -> http=200 elapsed=12ms body={"mode":"Healthy","delayMs":0}
+[04:12:59.021] waiting for circuit breaker BreakDuration before probing
+[04:13:04.552] GET /demo/get/1 -> http=200 elapsed=16ms body={"outcome":"Success","statusCode":200,"detail":"ok"}
+[04:13:04.570] GET /demo/status -> http=200 elapsed=10ms body={"circuitState":"Closed","downstreamMode":"Healthy","counters":{"successes":1,"failures":6,"retryAttempts":3,"timeouts":0,"bulkheadRejections":0,"circuitShortCircuited":6}}
+[04:13:04.598] GET /demo/metrics -> http=200 elapsed=20ms body={"circuitState":"Closed","counters":{"successes":1,"failures":6,"retryAttempts":3,"timeouts":0,"bulkheadRejections":0,"circuitShortCircuited":6},"transitions":[{"timestamp":"2026-09-04T04:12:58.1852921+00:00","from":"Closed","to":"Open","reason":"HTTP 503"},{"timestamp":"2026-09-04T04:13:04.5391345+00:00","from":"Open","to":"HalfOpen","reason":"break duration elapsed, probing"},{"timestamp":"2026-09-04T04:13:04.5431663+00:00","from":"HalfOpen","to":"Closed","reason":"probe succeeded"}]}
+[04:13:04.600] === SCENARIO D: timeout ===
+[04:13:04.620] POST /demo/reset -> http=204 elapsed=11ms body=
+[04:13:04.648] POST /downstream/control -> http=200 elapsed=15ms body={"mode":"Slow","delayMs":1500}
+[04:13:05.491] POST /demo/event -> http=504 elapsed=835ms body={"outcome":"Timeout","statusCode":null,"detail":"attempt timed out"}
+[04:13:05.510] GET /demo/status -> http=200 elapsed=10ms body={"circuitState":"Closed","downstreamMode":"Slow","counters":{"successes":0,"failures":1,"retryAttempts":0,"timeouts":1,"bulkheadRejections":0,"circuitShortCircuited":0}}
+[04:13:05.512] === SCENARIO E: bulkhead under concurrency ===
+[04:13:05.539] POST /demo/reset -> http=204 elapsed=19ms body=
+[04:13:05.558] POST /downstream/control -> http=200 elapsed=11ms body={"mode":"Slow","delayMs":500}
+[04:13:06.609] POST /demo/concurrent?count=10 -> http=200 elapsed=1039ms body={"requested":10,"summary":{"Success":5,"BulkheadRejected":5}}
+[04:13:06.630] GET /demo/status -> http=200 elapsed=12ms body={"circuitState":"Closed","downstreamMode":"Slow","counters":{"successes":5,"failures":5,"retryAttempts":0,"timeouts":0,"bulkheadRejections":5,"circuitShortCircuited":0}}
+[04:13:06.633] === FINAL METRICS SNAPSHOT ===
+[04:13:06.659] GET /demo/metrics -> http=200 elapsed=11ms body={"circuitState":"Closed","counters":{"successes":5,"failures":5,"retryAttempts":0,"timeouts":0,"bulkheadRejections":5,"circuitShortCircuited":0},"transitions":[{"timestamp":"2026-09-04T04:12:58.1852921+00:00","from":"Closed","to":"Open","reason":"HTTP 503"},{"timestamp":"2026-09-04T04:13:04.5391345+00:00","from":"Open","to":"HalfOpen","reason":"break duration elapsed, probing"},{"timestamp":"2026-09-04T04:13:04.5431663+00:00","from":"HalfOpen","to":"Closed","reason":"probe succeeded"}]}
+[04:13:06.663] demo complete, evidence written to /home/ayush/Desktop/thingschool/day-22/load-test/evidence
+[04:13:06.665] stopping app pid=15475
