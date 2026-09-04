@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MaintainXpert.Api/MaintainXpert.Api.csproj" />
+    <Project Path="src/MaintainXpert.Assets/MaintainXpert.Assets.csproj" />
+    <Project Path="src/MaintainXpert.Maintenance/MaintainXpert.Maintenance.csproj" />
+    <Project Path="src/MaintainXpert.Notifications/MaintainXpert.Notifications.csproj" />
+    <Project Path="src/MaintainXpert.SharedKernel/MaintainXpert.SharedKernel.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MaintainXpert.Maintenance.Tests/MaintainXpert.Maintenance.Tests.csproj" />
+  </Folder>
+</Solution>

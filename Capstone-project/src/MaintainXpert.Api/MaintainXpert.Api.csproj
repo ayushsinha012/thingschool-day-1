@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\MaintainXpert.SharedKernel\MaintainXpert.SharedKernel.csproj" />
+    <ProjectReference Include="..\MaintainXpert.Maintenance\MaintainXpert.Maintenance.csproj" />
+    <ProjectReference Include="..\MaintainXpert.Assets\MaintainXpert.Assets.csproj" />
+    <ProjectReference Include="..\MaintainXpert.Notifications\MaintainXpert.Notifications.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+</Project>
