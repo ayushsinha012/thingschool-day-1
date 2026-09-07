@@ -1,0 +1,23 @@
+=== az bicep version ===
+Bicep CLI version 0.46.1 (545b338e2c)
+
+
+=== az bicep build --file main.bicep ===
+Exit code: 0
+
+=== az bicep lint --file main.bicep ===
+
+Exit code: 0
+
+=== az bicep build-params --file params/dev.bicepparam ===
+ERROR: C:\Users\DELL\Desktop\thingschool\day-23\infra\params\dev.bicepparam(37,23) : Error BCP333: The provided value (whose length will always be less than or equal to 1) is too short to assign to a target for which the minimum allowable length is 32. [https://aka.ms/bicep/core-diagnostics#BCP333]
+Exit code: 1
+
+=== az bicep build-params --file params/prod.bicepparam ===
+ERROR: C:\Users\DELL\Desktop\thingschool\day-23\infra\params\prod.bicepparam(33,23) : Error BCP333: The provided value (whose length will always be less than or equal to 1) is too short to assign to a target for which the minimum allowable length is 32. [https://aka.ms/bicep/core-diagnostics#BCP333]
+Exit code: 1
+=== az bicep build-params --file params/dev.bicepparam (with valid-length DEV_JWT_SIGNING_KEY) ===
+Exit code: 0
+
+=== az bicep build-params --file params/prod.bicepparam (with valid-length PROD_JWT_SIGNING_KEY) ===
+Exit code: 0

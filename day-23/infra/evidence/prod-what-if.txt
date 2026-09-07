@@ -1,0 +1,135 @@
+Note: The result may contain false positive predictions (noise).
+You can help us improve the accuracy of the result by opening an issue here: https://aka.ms/WhatIfIssues
+NOTICE! - Want to get What-if without noise? Move to Deployment Stacks What-If https://aka.ms/stackswhatifGA
+
+Resource and property changes are indicated with these symbols:
+  - Delete
+  + Create
+  ~ Modify
+  * Ignore
+
+The deployment will update the following scope:
+
+Scope: /subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg
+
+  ~ Microsoft.App/containerApps/quotes-api [2024-03-01]
+    - properties.configuration.ingress.clientCertificateMode: "Ignore"
+    - properties.configuration.ingress.exposedPort:           0
+    - properties.configuration.ingress.stickySessions:
+
+        affinity: "none"
+
+    - properties.configuration.ingress.traffic: [
+        0:
+
+          label:          "label-1"
+          latestRevision: true
+          weight:         100
+
+      ]
+    - properties.configuration.maxInactiveRevisions:          0
+    - properties.runningStatus:                               "Running"
+    - tags.azd-env-name:                                      "quotesapi-thinkschool"
+    - tags.azd-service-name:                                  "quotes-api"
+    + tags.day:                                               "23"
+    + tags.environment:                                       "prod"
+    ~ properties.configuration.registries: [
+      ~ 0:
+
+        ~ server: "cr2i2oapij4zsrc.azurecr.io" => "[reference('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ContainerRegistry/registries/cr2i2oapij4zsrc', '2023-07-01').loginServer]"
+
+      ]
+    ~ properties.configuration.secrets: [
+        0:
+
+          name: "jwt-signing-key"
+
+        1:
+
+          name: "redis-connection-string"
+
+      ] => "[concat(createArray(createObject('name', 'jwt-signing-key', 'value', parameters('jwtSigningKey'))), if(empty(parameters('redisConnectionString')), createArray(), createArray(createObject('name', 'redis-connection-string', 'value', parameters('redisConnectionString')))), if(empty(parameters('appInsightsConnectionString')), createArray(), createArray(createObject('name', 'app-insights-connection-string', 'value', parameters('appInsightsConnectionString')))))]"
+
+    ~ properties.template.containers: [
+      ~ 0:
+
+        ~ env: [
+            0:
+
+              name:  "APPLICATIONINSIGHTS_CONNECTION_STRING"
+              value: "[REDACTED - live Application Insights connection string, withheld per the no-secrets rule for this evidence set]"
+
+            1:
+
+              name:  "AZURE_CLIENT_ID"
+              value: "039e3529-56c6-44cc-a3c9-9c4f0457663b"
+
+            2:
+
+              name:  "PORT"
+              value: "8080"
+
+            3:
+
+              name:      "Jwt__Key"
+              secretRef: "jwt-signing-key"
+
+            4:
+
+              name:  "ConnectionStrings__DefaultConnection"
+              value: "Data Source=/tmp/quotes.db"
+
+            5:
+
+              name:  "Cors__ProductionOrigins__0"
+              value: "https://polite-mushroom-04dd5ce00.7.azurestaticapps.net"
+
+            6:
+
+              name:      "ConnectionStrings__Redis"
+              secretRef: "redis-connection-string"
+
+          ] => "[concat(createArray(createObject('name', 'PORT', 'value', '8080'), createObject('name', 'AZURE_CLIENT_ID', 'value', reference('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-quotesApi-2i2oapij4zsrc', '2023-01-31').clientId), createObject('name', 'Jwt__Key', 'secretRef', 'jwt-signing-key')), if(empty(parameters('appInsightsConnectionString')), createArray(), createArray(createObject('name', 'APPLICATIONINSIGHTS_CONNECTION_STRING', 'secretRef', 'app-insights-connection-string'))), if(empty(parameters('redisConnectionString')), createArray(), createArray(createObject('name', 'ConnectionStrings__Redis', 'secretRef', 'redis-connection-string'))), createArray(createObject('name', 'Cors__ProductionOrigins__0', 'value', 'https://polite-mushroom-04dd5ce00.7.azurestaticapps.net')))]"
+
+
+      ]
+
+  ~ Microsoft.ServiceBus/namespaces/sb-quotesapi-thinkschool/topics/quote-events [2024-01-01]
+    - properties.autoDeleteOnIdle:                    "P10675199DT2H48M5.4775807S"
+    - properties.duplicateDetectionHistoryTimeWindow: "PT10M"
+    - properties.enableBatchedOperations:             true
+    - properties.enableExpress:                       false
+    - properties.enablePartitioning:                  false
+    - properties.maxMessageSizeInKilobytes:           256
+    - properties.maxSizeInMegabytes:                  1024
+    - properties.supportOrdering:                     true
+
+  ~ Microsoft.ServiceBus/namespaces/sb-quotesapi-thinkschool/topics/quote-events/subscriptions/sub-audit [2024-01-01]
+    - properties.autoDeleteOnIdle:        "P10675199DT2H48M5.4775807S"
+    - properties.enableBatchedOperations: true
+    - properties.isClientAffine:          false
+
+  ~ Microsoft.ServiceBus/namespaces/sb-quotesapi-thinkschool/topics/quote-events/subscriptions/sub-notifications [2024-01-01]
+    - properties.autoDeleteOnIdle:        "P10675199DT2H48M5.4775807S"
+    - properties.enableBatchedOperations: true
+    - properties.isClientAffine:          false
+
+  * Microsoft.App/containerApps/quotes-bff
+  * Microsoft.App/managedEnvironments/thinkschool-env
+  * Microsoft.Cache/Redis/redis-quotesapi-thinkschool
+  * Microsoft.ContainerRegistry/registries/cr2i2oapij4zsrc
+  * Microsoft.Insights/components/appi-2i2oapij4zsrc
+  * Microsoft.ManagedIdentity/userAssignedIdentities/id-quotesApi-2i2oapij4zsrc
+  * Microsoft.OperationalInsights/workspaces/log-2i2oapij4zsrc
+  * Microsoft.OperationalInsights/workspaces/workspace-thinkschoolrgXVsL
+  * Microsoft.OperationalInsights/workspaces/workspace-thinkschoolrgqWEi
+  * Microsoft.Portal/dashboards/dash-2i2oapij4zsrc
+  * Microsoft.ServiceBus/namespaces/sb-quotesapi-thinkschool
+  * Microsoft.Sql/servers/thinkschool-day7-sql-0c0dda
+  * Microsoft.Sql/servers/thinkschool-day7-sql-0c0dda/databases/master
+  * Microsoft.Sql/servers/thinkschool-day7-sql-0c0dda/databases/thinkschool-day7
+  * Microsoft.Storage/storageAccounts/stday20quotesapi
+  * Microsoft.Web/staticSites/thinkschool-ayush-swa
+  * microsoft.insights/actiongroups/Application Insights Smart Detection
+
+Resource changes: 4 to modify, 17 to ignore.

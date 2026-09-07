@@ -1,0 +1,54 @@
+=== az group show --name thinkschool-rg ===
+Location      Name
+------------  --------------
+centralindia  thinkschool-rg
+
+=== az resource list --resource-group thinkschool-rg ===
+Name                                          ResourceGroup    Location      Type                                              Status
+--------------------------------------------  ---------------  ------------  ------------------------------------------------  ---------
+workspace-thinkschoolrgqWEi                   thinkschool-rg   centralindia  Microsoft.OperationalInsights/workspaces          Succeeded
+thinkschool-env                               thinkschool-rg   centralindia  Microsoft.App/managedEnvironments                 Succeeded
+workspace-thinkschoolrgXVsL                   thinkschool-rg   centralindia  Microsoft.OperationalInsights/workspaces          Succeeded
+log-2i2oapij4zsrc                             thinkschool-rg   centralindia  Microsoft.OperationalInsights/workspaces          Succeeded
+id-quotesApi-2i2oapij4zsrc                    thinkschool-rg   centralindia  Microsoft.ManagedIdentity/userAssignedIdentities  Succeeded
+cr2i2oapij4zsrc                               thinkschool-rg   centralindia  Microsoft.ContainerRegistry/registries            Succeeded
+appi-2i2oapij4zsrc                            thinkschool-rg   centralindia  Microsoft.Insights/components                     Succeeded
+dash-2i2oapij4zsrc                            thinkschool-rg   centralindia  Microsoft.Portal/dashboards                       Succeeded
+quotes-api                                    thinkschool-rg   centralindia  Microsoft.App/containerApps                       Succeeded
+Application Insights Smart Detection          thinkschool-rg   global        microsoft.insights/actiongroups                   Succeeded
+thinkschool-day7-sql-0c0dda                   thinkschool-rg   centralindia  Microsoft.Sql/servers                             Succeeded
+thinkschool-day7-sql-0c0dda/master            thinkschool-rg   centralindia  Microsoft.Sql/servers/databases                   Succeeded
+thinkschool-day7-sql-0c0dda/thinkschool-day7  thinkschool-rg   centralindia  Microsoft.Sql/servers/databases                   Succeeded
+thinkschool-ayush-swa                         thinkschool-rg   eastasia      Microsoft.Web/staticSites                         Succeeded
+quotes-bff                                    thinkschool-rg   centralindia  Microsoft.App/containerApps                       Succeeded
+sb-quotesapi-thinkschool                      thinkschool-rg   centralindia  Microsoft.ServiceBus/namespaces                   Succeeded
+stday20quotesapi                              thinkschool-rg   centralindia  Microsoft.Storage/storageAccounts                 Succeeded
+redis-quotesapi-thinkschool                   thinkschool-rg   centralindia  Microsoft.Cache/Redis                             Succeeded
+
+=== az servicebus topic show (quote-events) ===
+AccessedAt                    AutoDeleteOnIdle            CreatedAt                     DefaultMessageTimeToLive    DuplicateDetectionHistoryTimeWindow    EnableBatchedOperations    EnableExpress    EnablePartitioning    Location      MaxMessageSizeInKilobytes    MaxSizeInMegabytes    Name          RequiresDuplicateDetection    ResourceGroup    SizeInBytes    Status    SubscriptionCount    SupportOrdering    UpdatedAt
+----------------------------  --------------------------  ----------------------------  --------------------------  -------------------------------------  -------------------------  ---------------  --------------------  ------------  ---------------------------  --------------------  ------------  ----------------------------  ---------------  -------------  --------  -------------------  -----------------  ----------------------------
+2026-09-07T06:59:28.9749292Z  P10675199DT2H48M5.4775807S  2026-09-01T05:35:02.7181031Z  P10675199DT2H48M5.4775807S  PT10M                                  True                       False            False                 centralindia  256                          1024                  quote-events  False                         thinkschool-rg   3868           Active    2                    True               2026-09-01T05:35:02.7181031Z
+
+=== az servicebus topic subscription list (quote-events) ===
+AccessedAt                    AutoDeleteOnIdle            CreatedAt                     DeadLetteringOnFilterEvaluationExceptions    DeadLetteringOnMessageExpiration    DefaultMessageTimeToLive    EnableBatchedOperations    IsClientAffine    Location      LockDuration    MaxDeliveryCount    MessageCount    Name               RequiresSession    ResourceGroup    Status    UpdatedAt
+----------------------------  --------------------------  ----------------------------  -------------------------------------------  ----------------------------------  --------------------------  -------------------------  ----------------  ------------  --------------  ------------------  --------------  -----------------  -----------------  ---------------  --------  ----------------------------
+2026-09-07T06:59:33.0220687Z  P10675199DT2H48M5.4775807S  2026-09-01T05:35:11.3951199Z  True                                         True                                P10675199DT2H48M5.4775807S  True                       False             centralindia  PT1M            3                   3               sub-audit          False              thinkschool-rg   Active    2026-09-01T05:35:11.3951199Z
+2026-09-07T06:59:33.0220687Z  P10675199DT2H48M5.4775807S  2026-09-01T05:35:20.820638Z   True                                         True                                P10675199DT2H48M5.4775807S  True                       False             centralindia  PT1M            3                   3               sub-notifications  False              thinkschool-rg   Active    2026-09-01T05:35:20.820638Z
+
+=== az containerapp show (quotes-api) - summary ===
+{
+  "fqdn": "quotes-api.politeocean-3efec37e.centralindia.azurecontainerapps.io",
+  "image": "cr2i2oapij4zsrc.azurecr.io/quotes-api/quotes-api-quotesapi-thinkschool:day21-hybridcache-1788429669",
+  "maxReplicas": 10,
+  "minReplicas": 1,
+  "name": "quotes-api",
+  "provisioningState": "Succeeded"
+}
+
+=== az sql server show (thinkschool-day7-sql-0c0dda) - confirming this is the unrelated Day-7 resource, unmodeled/untouched ===
+{
+  "adminLogin": "day7admin",
+  "fqdn": "thinkschool-day7-sql-0c0dda.database.windows.net",
+  "name": "thinkschool-day7-sql-0c0dda"
+}
