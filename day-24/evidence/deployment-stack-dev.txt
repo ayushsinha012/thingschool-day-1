@@ -1,0 +1,193 @@
+$ az stack group show --resource-group thinkschool-rg --name azd-stack-dev
+{
+  "actionOnUnmanage": {
+    "managementGroups": "detach",
+    "resourceGroups": "detach",
+    "resources": "delete",
+    "resourcesWithoutDeleteSupport": "fail"
+  },
+  "bypassStackOutOfSyncError": null,
+  "correlationId": "1bd59856-0795-297a-0e71-f1643962b32e",
+  "debugSetting": null,
+  "deletedResources": [],
+  "denySettings": {
+    "applyToChildScopes": false,
+    "excludedActions": [],
+    "excludedPrincipals": [],
+    "mode": "denyDelete"
+  },
+  "deploymentExtensions": [],
+  "deploymentId": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.Resources/deployments/azd-stack-dev-26090805d1u7t",
+  "deploymentScope": null,
+  "description": null,
+  "detachedResources": [],
+  "duration": "PT3M45.672886S",
+  "error": null,
+  "extensionConfigs": null,
+  "externalInputDefinitions": null,
+  "externalInputs": null,
+  "failedResources": [],
+  "id": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.Resources/deploymentStacks/azd-stack-dev",
+  "location": null,
+  "name": "azd-stack-dev",
+  "outputs": {
+    "apiFqdn": {
+      "type": "String",
+      "value": "quotes-api-day24-dev.politeocean-3efec37e.centralindia.azurecontainerapps.io"
+    },
+    "apiName": {
+      "type": "String",
+      "value": "quotes-api-day24-dev"
+    },
+    "apiResourceId": {
+      "type": "String",
+      "value": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.App/containerApps/quotes-api-day24-dev"
+    },
+    "serviceBusNamespaceName": {
+      "type": "String",
+      "value": "sb-quotesapi-day24-dev"
+    },
+    "serviceBusSubscriptionNames": {
+      "type": "Array",
+      "value": [
+        "sub-audit",
+        "sub-notifications"
+      ]
+    },
+    "serviceBusTopicName": {
+      "type": "String",
+      "value": "quote-events"
+    },
+    "sqlDatabaseResourceId": {
+      "type": "String",
+      "value": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.Sql/servers/sql-quotesapi-day24-dev/databases/quotesapi"
+    },
+    "sqlServerFqdn": {
+      "type": "String",
+      "value": "sql-quotesapi-day24-dev.database.windows.net"
+    }
+  },
+  "parameters": {
+    "environmentName": {
+      "expression": null,
+      "reference": null,
+      "type": "string",
+      "value": "dev"
+    },
+    "jwtSigningKey": {
+      "expression": null,
+      "reference": null,
+      "type": "securestring",
+      "value": ""
+    },
+    "location": {
+      "expression": null,
+      "reference": null,
+      "type": "string",
+      "value": "centralindia"
+    }
+  },
+  "parametersLink": null,
+  "provisioningState": "succeeded",
+  "resourceGroup": "thinkschool-rg",
+  "resources": [
+    {
+      "apiVersion": null,
+      "denyStatus": "denyDelete",
+      "extension": null,
+      "id": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.App/containerApps/quotes-api-day24-dev",
+      "identifiers": null,
+      "resourceGroup": "thinkschool-rg",
+      "status": "managed",
+      "type": null
+    },
+    {
+      "apiVersion": null,
+      "denyStatus": "denyDelete",
+      "extension": null,
+      "id": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ServiceBus/namespaces/sb-quotesapi-day24-dev",
+      "identifiers": null,
+      "resourceGroup": "thinkschool-rg",
+      "status": "managed",
+      "type": null
+    },
+    {
+      "apiVersion": null,
+      "denyStatus": "denyDelete",
+      "extension": null,
+      "id": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ServiceBus/namespaces/sb-quotesapi-day24-dev/topics/quote-events",
+      "identifiers": null,
+      "resourceGroup": "thinkschool-rg",
+      "status": "managed",
+      "type": null
+    },
+    {
+      "apiVersion": null,
+      "denyStatus": "denyDelete",
+      "extension": null,
+      "id": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ServiceBus/namespaces/sb-quotesapi-day24-dev/topics/quote-events/subscriptions/sub-audit",
+      "identifiers": null,
+      "resourceGroup": "thinkschool-rg",
+      "status": "managed",
+      "type": null
+    },
+    {
+      "apiVersion": null,
+      "denyStatus": "denyDelete",
+      "extension": null,
+      "id": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ServiceBus/namespaces/sb-quotesapi-day24-dev/topics/quote-events/subscriptions/sub-notifications",
+      "identifiers": null,
+      "resourceGroup": "thinkschool-rg",
+      "status": "managed",
+      "type": null
+    },
+    {
+      "apiVersion": null,
+      "denyStatus": "denyDelete",
+      "extension": null,
+      "id": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.Sql/servers/sql-quotesapi-day24-dev",
+      "identifiers": null,
+      "resourceGroup": "thinkschool-rg",
+      "status": "managed",
+      "type": null
+    },
+    {
+      "apiVersion": null,
+      "denyStatus": "denyDelete",
+      "extension": null,
+      "id": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.Sql/servers/sql-quotesapi-day24-dev/databases/quotesapi",
+      "identifiers": null,
+      "resourceGroup": "thinkschool-rg",
+      "status": "managed",
+      "type": null
+    },
+    {
+      "apiVersion": null,
+      "denyStatus": "denyDelete",
+      "extension": null,
+      "id": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.Sql/servers/sql-quotesapi-day24-dev/firewallRules/AllowAllWindowsAzureIps",
+      "identifiers": null,
+      "resourceGroup": "thinkschool-rg",
+      "status": "managed",
+      "type": null
+    }
+  ],
+  "systemData": {
+    "createdAt": "2026-09-08T05:44:34.802416+00:00",
+    "createdBy": "ayush.sinha7@s.amity.edu",
+    "createdByType": "User",
+    "lastModifiedAt": "2026-09-08T05:44:34.802416+00:00",
+    "lastModifiedBy": "ayush.sinha7@s.amity.edu",
+    "lastModifiedByType": "User"
+  },
+  "tags": {
+    "azd-env-name": "dev",
+    "azd-layer-name": "",
+    "azd-provision-param-hash": "e2049adcf0dbc714330910bd1dc5c8c772c7502520e4bc622bb59546bdd6a8b2",
+    "azd-provision-template-hash": "4547636396179540778"
+  },
+  "template": null,
+  "templateLink": null,
+  "type": "Microsoft.Resources/deploymentStacks",
+  "validationLevel": null
+}

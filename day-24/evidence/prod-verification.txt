@@ -1,0 +1,27 @@
+$ azd show --environment prod
+Gathering information about your app and its resources...
+
+Showing services and environments for apps in this directory.
+To view a different environment, run azd show -e <environment name>
+
+quotesapi-day24-stacks
+  Services:
+    You don't have services defined. Add your services to azure.yaml.
+  Environments:
+    dev
+    prod [Current]
+  View in Azure Portal:
+    Application is not yet provisioned. Run azd provision or azd up first.
+
+$ az stack group list --resource-group thinkschool-rg -o table
+Name            State      Last Modified
+--------------  ---------  --------------------------------
+azd-stack-dev   succeeded  2026-09-08T05:44:34.802416+00:00
+azd-stack-prod  succeeded  2026-09-08T05:54:11.898439+00:00
+$ az resource list --tag environment=prod -o table
+Name                                ResourceGroup    Location      Type
+----------------------------------  ---------------  ------------  -------------------------------
+quotes-api-day24-prod               thinkschool-rg   centralindia  Microsoft.App/containerApps
+sb-quotesapi-day24-prod             thinkschool-rg   centralindia  Microsoft.ServiceBus/namespaces
+sql-quotesapi-day24-prod            thinkschool-rg   centralindia  Microsoft.Sql/servers
+sql-quotesapi-day24-prod/quotesapi  thinkschool-rg   centralindia  Microsoft.Sql/servers/databases

@@ -1,0 +1,31 @@
+$ az resource list --resource-group thinkschool-rg -o table
+Name                                          ResourceGroup    Location      Type                                              Status
+--------------------------------------------  ---------------  ------------  ------------------------------------------------  ---------
+workspace-thinkschoolrgqWEi                   thinkschool-rg   centralindia  Microsoft.OperationalInsights/workspaces          Succeeded
+thinkschool-env                               thinkschool-rg   centralindia  Microsoft.App/managedEnvironments                 Succeeded
+workspace-thinkschoolrgXVsL                   thinkschool-rg   centralindia  Microsoft.OperationalInsights/workspaces          Succeeded
+log-2i2oapij4zsrc                             thinkschool-rg   centralindia  Microsoft.OperationalInsights/workspaces          Succeeded
+id-quotesApi-2i2oapij4zsrc                    thinkschool-rg   centralindia  Microsoft.ManagedIdentity/userAssignedIdentities  Succeeded
+cr2i2oapij4zsrc                               thinkschool-rg   centralindia  Microsoft.ContainerRegistry/registries            Succeeded
+appi-2i2oapij4zsrc                            thinkschool-rg   centralindia  Microsoft.Insights/components                     Succeeded
+dash-2i2oapij4zsrc                            thinkschool-rg   centralindia  Microsoft.Portal/dashboards                       Succeeded
+quotes-api                                    thinkschool-rg   centralindia  Microsoft.App/containerApps                       Succeeded
+Application Insights Smart Detection          thinkschool-rg   global        microsoft.insights/actiongroups                   Succeeded
+thinkschool-day7-sql-0c0dda                   thinkschool-rg   centralindia  Microsoft.Sql/servers                             Succeeded
+thinkschool-day7-sql-0c0dda/master            thinkschool-rg   centralindia  Microsoft.Sql/servers/databases                   Succeeded
+thinkschool-day7-sql-0c0dda/thinkschool-day7  thinkschool-rg   centralindia  Microsoft.Sql/servers/databases                   Succeeded
+thinkschool-ayush-swa                         thinkschool-rg   eastasia      Microsoft.Web/staticSites                         Succeeded
+quotes-bff                                    thinkschool-rg   centralindia  Microsoft.App/containerApps                       Succeeded
+sb-quotesapi-thinkschool                      thinkschool-rg   centralindia  Microsoft.ServiceBus/namespaces                   Succeeded
+stday20quotesapi                              thinkschool-rg   centralindia  Microsoft.Storage/storageAccounts                 Succeeded
+redis-quotesapi-thinkschool                   thinkschool-rg   centralindia  Microsoft.Cache/Redis                             Succeeded
+sql-quotesapi-day24-dev                       thinkschool-rg   centralindia  Microsoft.Sql/servers                             Succeeded
+sb-quotesapi-day24-dev                        thinkschool-rg   centralindia  Microsoft.ServiceBus/namespaces                   Succeeded
+quotes-api-day24-dev                          thinkschool-rg   centralindia  Microsoft.App/containerApps                       Succeeded
+sql-quotesapi-day24-dev/master                thinkschool-rg   centralindia  Microsoft.Sql/servers/databases                   Succeeded
+sql-quotesapi-day24-dev/quotesapi             thinkschool-rg   centralindia  Microsoft.Sql/servers/databases                   Succeeded
+sql-quotesapi-day24-prod                      thinkschool-rg   centralindia  Microsoft.Sql/servers                             Succeeded
+sb-quotesapi-day24-prod                       thinkschool-rg   centralindia  Microsoft.ServiceBus/namespaces                   Succeeded
+quotes-api-day24-prod                         thinkschool-rg   centralindia  Microsoft.App/containerApps                       Succeeded
+sql-quotesapi-day24-prod/master               thinkschool-rg   centralindia  Microsoft.Sql/servers/databases                   Succeeded
+sql-quotesapi-day24-prod/quotesapi            thinkschool-rg   centralindia  Microsoft.Sql/servers/databases                   Succeeded

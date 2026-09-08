@@ -1,0 +1,119 @@
+$ az stack group show --resource-group thinkschool-rg --name azd-stack-dev --query "resources[].{id:id,status:status,denyStatus:denyStatus}" -o table
+Status    DenyStatus
+--------  ------------
+managed   denyDelete
+managed   denyDelete
+managed   denyDelete
+managed   denyDelete
+managed   denyDelete
+managed   denyDelete
+managed   denyDelete
+managed   denyDelete
+
+$ az stack group show --resource-group thinkschool-rg --name azd-stack-dev --query "denySettings"
+{
+  "applyToChildScopes": false,
+  "excludedActions": [],
+  "excludedPrincipals": [],
+  "mode": "denyDelete"
+}
+
+$ az deployment group what-if --resource-group thinkschool-rg --template-file infra/main.bicep --parameters environmentName=dev jwtSigningKey=[REDACTED]
+Note: The result may contain false positive predictions (noise).
+You can help us improve the accuracy of the result by opening an issue here: https://aka.ms/WhatIfIssues
+NOTICE! - Want to get What-if without noise? Move to Deployment Stacks What-If https://aka.ms/stackswhatifGA
+
+Resource and property changes are indicated with these symbols:
+  - Delete
+  ~ Modify
+  = Nochange
+  * Ignore
+  x Noeffect
+
+The deployment will update the following scope:
+
+Scope: /subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg
+
+  ~ Microsoft.App/containerApps/quotes-api-day24-dev [2024-03-01]
+    - properties.configuration.ingress.exposedPort:  0
+    - properties.configuration.ingress.traffic: [
+        0:
+
+          latestRevision: true
+          weight:         100
+
+      ]
+    - properties.configuration.maxInactiveRevisions: 100
+    - properties.runningStatus:                      "Running"
+    ~ properties.configuration.registries: [
+      ~ 0:
+
+        ~ server: "cr2i2oapij4zsrc.azurecr.io" => "[reference('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ContainerRegistry/registries/cr2i2oapij4zsrc', '2023-07-01').loginServer]"
+
+      ]
+    ~ properties.template.containers: [
+      ~ 0:
+
+        ~ env: [
+          ~ 1:
+
+            ~ value: "039e3529-56c6-44cc-a3c9-9c4f0457663b" => "[reference('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-quotesApi-2i2oapij4zsrc', '2023-01-31').clientId]"
+
+          ]
+
+      ]
+
+  ~ Microsoft.ServiceBus/namespaces/sb-quotesapi-day24-dev/topics/quote-events [2024-01-01]
+    - properties.autoDeleteOnIdle:                    "P10675199DT2H48M5.4775807S"
+    - properties.duplicateDetectionHistoryTimeWindow: "PT10M"
+    - properties.enableBatchedOperations:             true
+    - properties.enableExpress:                       false
+    - properties.enablePartitioning:                  false
+    - properties.maxMessageSizeInKilobytes:           256
+    - properties.maxSizeInMegabytes:                  1024
+    - properties.supportOrdering:                     true
+
+  ~ Microsoft.ServiceBus/namespaces/sb-quotesapi-day24-dev/topics/quote-events/subscriptions/sub-audit [2024-01-01]
+    - properties.autoDeleteOnIdle:        "P10675199DT2H48M5.4775807S"
+    - properties.enableBatchedOperations: true
+    - properties.isClientAffine:          false
+
+  ~ Microsoft.ServiceBus/namespaces/sb-quotesapi-day24-dev/topics/quote-events/subscriptions/sub-notifications [2024-01-01]
+    - properties.autoDeleteOnIdle:        "P10675199DT2H48M5.4775807S"
+    - properties.enableBatchedOperations: true
+    - properties.isClientAffine:          false
+
+  = Microsoft.ServiceBus/namespaces/sb-quotesapi-day24-dev [2024-01-01]
+    x sku.tier: "Standard"
+
+  = Microsoft.Sql/servers/sql-quotesapi-day24-dev [2023-08-01-preview]
+  = Microsoft.Sql/servers/sql-quotesapi-day24-dev/databases/quotesapi [2023-08-01-preview]
+    x sku.tier: "Basic"
+
+  = Microsoft.Sql/servers/sql-quotesapi-day24-dev/firewallRules/AllowAllWindowsAzureIps [2023-08-01-preview]
+  * Microsoft.App/containerApps/quotes-api
+  * Microsoft.App/containerApps/quotes-api-day24-prod
+  * Microsoft.App/containerApps/quotes-bff
+  * Microsoft.App/managedEnvironments/thinkschool-env
+  * Microsoft.Cache/Redis/redis-quotesapi-thinkschool
+  * Microsoft.ContainerRegistry/registries/cr2i2oapij4zsrc
+  * Microsoft.Insights/components/appi-2i2oapij4zsrc
+  * Microsoft.ManagedIdentity/userAssignedIdentities/id-quotesApi-2i2oapij4zsrc
+  * Microsoft.OperationalInsights/workspaces/log-2i2oapij4zsrc
+  * Microsoft.OperationalInsights/workspaces/workspace-thinkschoolrgXVsL
+  * Microsoft.OperationalInsights/workspaces/workspace-thinkschoolrgqWEi
+  * Microsoft.Portal/dashboards/dash-2i2oapij4zsrc
+  * Microsoft.ServiceBus/namespaces/sb-quotesapi-day24-prod
+  * Microsoft.ServiceBus/namespaces/sb-quotesapi-thinkschool
+  * Microsoft.Sql/servers/sql-quotesapi-day24-dev/databases/master
+  * Microsoft.Sql/servers/sql-quotesapi-day24-prod
+  * Microsoft.Sql/servers/sql-quotesapi-day24-prod/databases/master
+  * Microsoft.Sql/servers/sql-quotesapi-day24-prod/databases/quotesapi
+  * Microsoft.Sql/servers/thinkschool-day7-sql-0c0dda
+  * Microsoft.Sql/servers/thinkschool-day7-sql-0c0dda/databases/master
+  * Microsoft.Sql/servers/thinkschool-day7-sql-0c0dda/databases/thinkschool-day7
+  * Microsoft.Storage/storageAccounts/stday20quotesapi
+  * Microsoft.Web/staticSites/thinkschool-ayush-swa
+  * microsoft.insights/actiongroups/Application Insights Smart Detection
+
+Resource changes: 4 to modify, 4 no change, 24 to ignore.

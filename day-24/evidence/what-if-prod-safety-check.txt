@@ -1,0 +1,183 @@
+$ az deployment group what-if --resource-group thinkschool-rg --template-file infra/main.bicep --parameters environmentName=prod jwtSigningKey=[REDACTED]
+
+Note: The result may contain false positive predictions (noise).
+You can help us improve the accuracy of the result by opening an issue here: https://aka.ms/WhatIfIssues
+NOTICE! - Want to get What-if without noise? Move to Deployment Stacks What-If https://aka.ms/stackswhatifGA
+
+Resource and property changes are indicated with these symbols:
+  + Create
+  * Ignore
+
+The deployment will update the following scope:
+
+Scope: /subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg
+
+  + Microsoft.App/containerApps/quotes-api-day24-prod [2024-03-01]
+
+      apiVersion:                                                                                                                                                                                              "2024-03-01"
+      id:                                                                                                                                                                                                      "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.App/containerApps/quotes-api-day24-prod"
+      identity.type:                                                                                                                                                                                           "UserAssigned"
+      identity.userAssignedIdentities./subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-quotesApi-2i2oapij4zsrc: {}
+      location:                                                                                                                                                                                                "centralindia"
+      name:                                                                                                                                                                                                    "quotes-api-day24-prod"
+      properties.configuration.activeRevisionsMode:                                                                                                                                                            "Single"
+      properties.configuration.ingress.allowInsecure:                                                                                                                                                          false
+      properties.configuration.ingress.external:                                                                                                                                                               true
+      properties.configuration.ingress.targetPort:                                                                                                                                                             8080
+      properties.configuration.ingress.transport:                                                                                                                                                              "auto"
+      properties.configuration.registries: [
+        0:
+
+          identity: "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-quotesApi-2i2oapij4zsrc"
+          server:   "[reference('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ContainerRegistry/registries/cr2i2oapij4zsrc', '2023-07-01').loginServer]"
+
+      ]
+      properties.configuration.secrets: [
+        0:
+
+          name:  "*******"
+          value: "*******"
+
+      ]
+      properties.managedEnvironmentId:                                                                                                                                                                         "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.App/managedEnvironments/thinkschool-env"
+      properties.template.containers: [
+        0:
+
+          env: [
+            0:
+
+              name:  "PORT"
+              value: "8080"
+
+            1:
+
+              name:  "AZURE_CLIENT_ID"
+              value: "[reference('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-quotesApi-2i2oapij4zsrc', '2023-01-31').clientId]"
+
+            2:
+
+              name:      "Jwt__Key"
+              secretRef: "*******"
+
+          ]
+          image:            "cr2i2oapij4zsrc.azurecr.io/quotes-api/quotes-api-quotesapi-thinkschool:day21-hybridcache-1788429669"
+          name:             "main"
+          resources.cpu:    0.5
+          resources.memory: "1Gi"
+
+      ]
+      properties.template.scale.maxReplicas:                                                                                                                                                                   3
+      properties.template.scale.minReplicas:                                                                                                                                                                   1
+      properties.workloadProfileName:                                                                                                                                                                          "Consumption"
+      tags.azd-env-name:                                                                                                                                                                                       "prod"
+      tags.day:                                                                                                                                                                                                "24"
+      tags.environment:                                                                                                                                                                                        "prod"
+      type:                                                                                                                                                                                                    "Microsoft.App/containerApps"
+
+  + Microsoft.ServiceBus/namespaces/sb-quotesapi-day24-prod [2024-01-01]
+
+      apiVersion:                     "2024-01-01"
+      id:                             "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ServiceBus/namespaces/sb-quotesapi-day24-prod"
+      location:                       "centralindia"
+      name:                           "sb-quotesapi-day24-prod"
+      properties.minimumTlsVersion:   "1.2"
+      properties.publicNetworkAccess: "Enabled"
+      properties.zoneRedundant:       false
+      sku.name:                       "Standard"
+      tags.azd-env-name:              "prod"
+      tags.day:                       "24"
+      tags.environment:               "prod"
+      type:                           "Microsoft.ServiceBus/namespaces"
+
+  + Microsoft.ServiceBus/namespaces/sb-quotesapi-day24-prod/topics/quote-events [2024-01-01]
+
+      apiVersion:                            "2024-01-01"
+      id:                                    "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ServiceBus/namespaces/sb-quotesapi-day24-prod/topics/quote-events"
+      name:                                  "quote-events"
+      properties.defaultMessageTimeToLive:   "P14D"
+      properties.requiresDuplicateDetection: false
+      type:                                  "Microsoft.ServiceBus/namespaces/topics"
+
+  + Microsoft.ServiceBus/namespaces/sb-quotesapi-day24-prod/topics/quote-events/subscriptions/sub-audit [2024-01-01]
+
+      apiVersion:                                  "2024-01-01"
+      id:                                          "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ServiceBus/namespaces/sb-quotesapi-day24-prod/topics/quote-events/subscriptions/sub-audit"
+      name:                                        "sub-audit"
+      properties.deadLetteringOnMessageExpiration: true
+      properties.defaultMessageTimeToLive:         "P14D"
+      properties.lockDuration:                     "PT1M"
+      properties.maxDeliveryCount:                 3
+      type:                                        "Microsoft.ServiceBus/namespaces/topics/subscriptions"
+
+  + Microsoft.ServiceBus/namespaces/sb-quotesapi-day24-prod/topics/quote-events/subscriptions/sub-notifications [2024-01-01]
+
+      apiVersion:                                  "2024-01-01"
+      id:                                          "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ServiceBus/namespaces/sb-quotesapi-day24-prod/topics/quote-events/subscriptions/sub-notifications"
+      name:                                        "sub-notifications"
+      properties.deadLetteringOnMessageExpiration: true
+      properties.defaultMessageTimeToLive:         "P14D"
+      properties.lockDuration:                     "PT1M"
+      properties.maxDeliveryCount:                 3
+      type:                                        "Microsoft.ServiceBus/namespaces/topics/subscriptions"
+
+  + Microsoft.Sql/servers/sql-quotesapi-day24-prod [2023-08-01-preview]
+
+      apiVersion:                                          "2023-08-01-preview"
+      id:                                                  "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.Sql/servers/sql-quotesapi-day24-prod"
+      location:                                            "centralindia"
+      name:                                                "sql-quotesapi-day24-prod"
+      properties.administrators.administratorType:         "ActiveDirectory"
+      properties.administrators.azureADOnlyAuthentication: true
+      properties.administrators.login:                     "*******"
+      properties.administrators.principalType:             "User"
+      properties.administrators.sid:                       "4eece2d1-e3b7-4754-a99a-afc480a96fc8"
+      properties.administrators.tenantId:                  "8d46a076-d093-416d-a57b-8692cde13bf8"
+      properties.minimalTlsVersion:                        "1.2"
+      properties.publicNetworkAccess:                      "Enabled"
+      tags.azd-env-name:                                   "prod"
+      tags.day:                                            "24"
+      tags.environment:                                    "prod"
+      type:                                                "Microsoft.Sql/servers"
+
+  + Microsoft.Sql/servers/sql-quotesapi-day24-prod/databases/quotesapi [2023-08-01-preview]
+
+      apiVersion:              "2023-08-01-preview"
+      id:                      "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.Sql/servers/sql-quotesapi-day24-prod/databases/quotesapi"
+      location:                "centralindia"
+      name:                    "quotesapi"
+      properties.maxSizeBytes: 2147483648
+      sku.name:                "Basic"
+      tags.azd-env-name:       "prod"
+      tags.day:                "24"
+      tags.environment:        "prod"
+      type:                    "Microsoft.Sql/servers/databases"
+
+  + Microsoft.Sql/servers/sql-quotesapi-day24-prod/firewallRules/AllowAllWindowsAzureIps [2023-08-01-preview]
+
+      apiVersion:                "2023-08-01-preview"
+      id:                        "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.Sql/servers/sql-quotesapi-day24-prod/firewallRules/AllowAllWindowsAzureIps"
+      name:                      "AllowAllWindowsAzureIps"
+      properties.endIpAddress:   "0.0.0.0"
+      properties.startIpAddress: "0.0.0.0"
+      type:                      "Microsoft.Sql/servers/firewallRules"
+
+  * Microsoft.App/containerApps/quotes-api
+  * Microsoft.App/containerApps/quotes-bff
+  * Microsoft.App/managedEnvironments/thinkschool-env
+  * Microsoft.Cache/Redis/redis-quotesapi-thinkschool
+  * Microsoft.ContainerRegistry/registries/cr2i2oapij4zsrc
+  * Microsoft.Insights/components/appi-2i2oapij4zsrc
+  * Microsoft.ManagedIdentity/userAssignedIdentities/id-quotesApi-2i2oapij4zsrc
+  * Microsoft.OperationalInsights/workspaces/log-2i2oapij4zsrc
+  * Microsoft.OperationalInsights/workspaces/workspace-thinkschoolrgXVsL
+  * Microsoft.OperationalInsights/workspaces/workspace-thinkschoolrgqWEi
+  * Microsoft.Portal/dashboards/dash-2i2oapij4zsrc
+  * Microsoft.ServiceBus/namespaces/sb-quotesapi-thinkschool
+  * Microsoft.Sql/servers/thinkschool-day7-sql-0c0dda
+  * Microsoft.Sql/servers/thinkschool-day7-sql-0c0dda/databases/master
+  * Microsoft.Sql/servers/thinkschool-day7-sql-0c0dda/databases/thinkschool-day7
+  * Microsoft.Storage/storageAccounts/stday20quotesapi
+  * Microsoft.Web/staticSites/thinkschool-ayush-swa
+  * microsoft.insights/actiongroups/Application Insights Smart Detection
+
+Resource changes: 8 to create, 18 to ignore.

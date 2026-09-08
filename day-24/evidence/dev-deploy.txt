@@ -1,0 +1,30 @@
+$ azd up --environment dev
+
+Initialize bicep provider
+Downloading Bicep
+  (✓) Done: Downloading Bicep
+
+Provisioning and deploying (azd up)
+Packaging overlaps with provisioning for faster execution.
+
+Initialize bicep provider
+Creating a deployment plan
+Validating deployment
+  (!) Warning: Resource "sql-quotesapi-day24-dev/AllowAllWindowsAzureIps" (Microsoft.Sql/servers/firewallRules) contains the reserved word "WINDOWS"
+  Azure does not allow reserved words in resource names. The deployment will fail.
+  • https://learn.microsoft.com/azure/azure-resource-manager/templates/error-reserved-resource-name
+
+Creating/Updating resources
+
+  You can view detailed progress in the Azure Portal:
+  https://portal.azure.com/#view/HubsExtension/DeploymentDetailsBlade/~/overview/id/%2Fsubscriptions%2F708f56eb-d40f-4658-adde-d6f5866dad34%2FresourceGroups%2Fthinkschool-rg%2Fproviders%2FMicrosoft.Resources%2Fdeployments%2Fazd-stack-dev-26090805d1u7t
+
+  (✓) Done: Service Bus Namespace: sb-quotesapi-day24-dev (18.584s)
+  (✓) Done: Container App: quotes-api-day24-dev (16.817s)
+  (✓) Done: Azure SQL Server: sql-quotesapi-day24-dev (1m10.263s)
+
+SUCCESS: Your application was provisioned and deployed to Azure in 4 minutes 15 seconds.
+  Provisioning: 4 minutes 15 seconds
+  Deploying:    less than a second
+
+[exited with code 0]

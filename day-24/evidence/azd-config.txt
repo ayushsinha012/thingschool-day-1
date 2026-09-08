@@ -1,0 +1,19 @@
+$ azd config set alpha.deployment.stacks on
+
+$ azd config show
+{
+  "alpha": {
+    "deployment": {
+      "stacks": "on"
+    }
+  },
+  "extension": {
+    "sources": {
+      "azd": {
+        "location": "https://aka.ms/azd/extensions/registry",
+        "name": "azd",
+        "type": "url"
+      }
+    }
+  }
+}

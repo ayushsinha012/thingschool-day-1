@@ -1,0 +1,14 @@
+name: quotesapi-day24-stacks
+metadata:
+  template: quotesapi-day24-stacks@0.1.0
+infra:
+  provider: bicep
+  path: infra
+  module: main
+  deploymentStacks:
+    actionOnUnmanage:
+      resources: delete
+      resourceGroups: detach
+    denySettings:
+      mode: denyDelete
+      applyToChildScopes: false
