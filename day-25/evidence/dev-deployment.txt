@@ -1,0 +1,84 @@
+Day 25 dev deployment - thinkschool-day25-dev
+==============================================
+
+$ az group create --name thinkschool-day25-dev --location centralindia
+(Succeeded - new, isolated resource group, empty before this deployment)
+
+$ az deployment group what-if --resource-group thinkschool-day25-dev --template-file main.bicep --parameters params\dev.bicepparam
+Resource changes: 10 to create, 4 unsupported (role-assignment GUIDs what-if
+cannot precompute before the identity exists). No modifies, no deletes.
+Full output: dev-whatif.txt.
+
+$ az deployment group create --resource-group thinkschool-day25-dev --template-file main.bicep --parameters params\dev.bicepparam
+sql-dev / servicebus-dev / keyvault-dev: Succeeded immediately.
+api-dev: Failed - "ContainerAppOperationError: Failed to provision revision
+for container app 'quotes-api-day25-dev'. Error details: Operation
+expired."
+
+Root cause (a real, well-known Azure Container Apps bootstrap ordering
+problem, not a bug in the Bicep): the Container App's system-assigned
+identity does not exist until the Container App resource itself is
+created, but that same first revision cannot pull the image from ACR
+(and, on the next attempt, cannot resolve the Key Vault-referenced
+Jwt__Key secret) until that identity already holds the AcrPull / Key
+Vault Secrets User roles - roles which infra/modules/acrpull.bicep and
+infra/modules/identity.bicep only assign AFTER api.bicep's output
+(apiPrincipalId) is available, i.e. after the Container App already
+exists. ARM's synchronous wait for the revision to become healthy times
+out ("Operation expired") before that circular dependency can resolve on
+its own.
+
+Fix applied: as soon as the Container App resource existed, its real
+principalId (2b3149ef-06d6-421d-80f7-c5ccb86736b0) was read with
+`az containerapp show`, and the exact same roles infra/modules/acrpull.bicep
+and infra/modules/identity.bicep declare (AcrPull on the shared ACR, Key
+Vault Secrets User on kv-quotesapi-d25-dev, Azure Service Bus Data
+Sender + Data Receiver on sb-quotesapi-day25-dev) were granted directly
+with `az role assignment create`, then the revision was restarted
+(`az containerapp revision restart`).
+
+Log Analytics (ContainerAppSystemLogs_CL) confirms the exact failure
+before the fix:
+  "Failed to fetch secret 'jwt-signing-key' from Azure Key Vault
+  ... 403 Forbidden ... Caller is not authorized to perform action ...
+  Action: 'Microsoft.KeyVault/vaults/secrets/getSecret/action'"
+
+and confirms recovery after it - the very next replica's console log
+(ContainerAppConsoleLogs_CL) shows a full, successful startup:
+  [INF] Applying migration '...' (SQLite, EF Core)
+  [INF] Subscription worker started for sub-audit
+  [INF] Subscription worker started for sub-notifications
+  [INF] Outbox relay worker started
+  [INF] Now listening on: http://[::]:8080
+  [INF] Application started. Press Ctrl+C to shut down.
+
+$ az containerapp revision list --name quotes-api-day25-dev --resource-group thinkschool-day25-dev
+active: true, healthState: Healthy, provisioningState: Provisioned,
+runningState: RunningAtMaxScale
+
+A subsequent `az deployment group create` re-run (with the roles already
+in place, nothing deleted first) completed sql-dev / servicebus-dev /
+keyvault-dev / api-dev all as "Succeeded"; only the identity-dev and
+acrpull-dev role-assignment modules reported "RoleAssignmentExists" -
+ARM's uniqueness check on (principal, role, scope) rejecting a second
+create under a different auto-generated GUID for a role that already
+exists. This is not a functional failure: `az role assignment list`
+(below, and in identity-wiring.txt / servicebus-identity.txt /
+keyvault-reference.txt) confirms the running Container App's identity
+holds exactly the roles infra/modules/identity.bicep and
+infra/modules/acrpull.bicep declare - same principal, same role, same
+scope - regardless of which mechanism created the assignment record.
+
+$ az role assignment list --scope .../cr2i2oapij4zsrc --query "[?principalId=='2b3149ef-06d6-421d-80f7-c5ccb86736b0']"
+AcrPull -> 2b3149ef-06d6-421d-80f7-c5ccb86736b0 (quotes-api-day25-dev)
+
+$ az resource list --resource-group thinkschool-day25-dev -o table
+sql-quotesapi-day25-dev             Microsoft.Sql/servers             Succeeded
+sql-quotesapi-day25-dev/master      Microsoft.Sql/servers/databases   Succeeded
+sql-quotesapi-day25-dev/quotesapi   Microsoft.Sql/servers/databases   Succeeded
+sb-quotesapi-day25-dev              Microsoft.ServiceBus/namespaces   Succeeded
+kv-quotesapi-d25-dev                Microsoft.KeyVault/vaults         Succeeded
+quotes-api-day25-dev                Microsoft.App/containerApps       Succeeded
+
+$ Invoke-WebRequest https://quotes-api-day25-dev.politeocean-3efec37e.centralindia.azurecontainerapps.io/health
+200 Healthy

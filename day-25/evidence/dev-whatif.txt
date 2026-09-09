@@ -1,0 +1,218 @@
+﻿Note: The result may contain false positive predictions (noise).
+You can help us improve the accuracy of the result by opening an issue here: https://aka.ms/WhatIfIssues
+NOTICE! - Want to get What-if without noise? Move to Deployment Stacks What-If https://aka.ms/stackswhatifGA
+
+Resource and property changes are indicated with these symbols:
+  + Create
+  x Unsupported
+
+The deployment will update the following scopes:
+
+Scope: /
+
+
+
+
+
+
+Scope: /subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-dev
+
+  + Microsoft.App/containerApps/quotes-api-day25-dev [2024-03-01]
+
+      apiVersion:                                     "2024-03-01"
+      id:                                             "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-dev/providers/Microsoft.App/containerApps/quotes-api-day25-dev"
+      identity.type:                                  "SystemAssigned"
+      location:                                       "centralindia"
+      name:                                           "quotes-api-day25-dev"
+      properties.configuration.activeRevisionsMode:   "Single"
+      properties.configuration.ingress.allowInsecure: false
+      properties.configuration.ingress.external:      true
+      properties.configuration.ingress.targetPort:    8080
+      properties.configuration.ingress.transport:     "auto"
+      properties.configuration.registries: [
+        0:
+
+          identity: "system"
+          server:   "[reference('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ContainerRegistry/registries/cr2i2oapij4zsrc', '2023-07-01').loginServer]"
+
+      ]
+      properties.configuration.secrets: [
+        0:
+
+          identity:    "system"
+          keyVaultUrl: "[format('{0}secrets/{1}', reference('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-dev/providers/Microsoft.KeyVault/vaults/kv-quotesapi-d25-dev', '2023-07-01').vaultUri, 'jwt-signing-key')]"
+          name:        "*******"
+
+      ]
+      properties.managedEnvironmentId:                "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.App/managedEnvironments/thinkschool-env"
+      properties.template.containers: [
+        0:
+
+          env: [
+            0:
+
+              name:  "PORT"
+              value: "8080"
+
+            1:
+
+              name:      "Jwt__Key"
+              secretRef: "*******"
+
+            2:
+
+              name:  "Entra__TenantId"
+              value: "8d46a076-d093-416d-a57b-8692cde13bf8"
+
+            3:
+
+              name:  "Entra__ClientId"
+              value: "953b5bcb-682b-47b4-a116-8936323f5bec"
+
+            4:
+
+              name:  "Entra__Audience"
+              value: "api://953b5bcb-682b-47b4-a116-8936323f5bec"
+
+            5:
+
+              name:  "ServiceBus__FullyQualifiedNamespace"
+              value: "sb-quotesapi-day25-dev.servicebus.windows.net"
+
+            6:
+
+              name:  "ConnectionStrings__AzureSql"
+              value: "[format('Server=tcp:{0},1433;Database={1};Authentication=Active Directory Default;Encrypt=True;TrustServerCertificate=False;', reference('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-dev/providers/Microsoft.Sql/servers/sql-quotesapi-day25-dev', '2023-08-01-preview').fullyQualifiedDomainName, 'quotesapi')]"
+
+          ]
+          image:            "cr2i2oapij4zsrc.azurecr.io/quotes-api/quotes-api-quotesapi-thinkschool:day21-hybridcache-1788429669"
+          name:             "main"
+          resources.cpu:    0.25
+          resources.memory: "0.5Gi"
+
+      ]
+      properties.template.scale.maxReplicas:          1
+      properties.template.scale.minReplicas:          0
+      properties.workloadProfileName:                 "Consumption"
+      tags.day:                                       "25"
+      tags.environment:                               "dev"
+      type:                                           "Microsoft.App/containerApps"
+
+  + Microsoft.KeyVault/vaults/kv-quotesapi-d25-dev [2023-07-01]
+
+      apiVersion:                           "2023-07-01"
+      id:                                   "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-dev/providers/Microsoft.KeyVault/vaults/kv-quotesapi-d25-dev"
+      location:                             "centralindia"
+      name:                                 "kv-quotesapi-d25-dev"
+      properties.enableRbacAuthorization:   true
+      properties.enableSoftDelete:          true
+      properties.publicNetworkAccess:       "Enabled"
+      properties.sku.family:                "A"
+      properties.sku.name:                  "standard"
+      properties.softDeleteRetentionInDays: 7
+      properties.tenantId:                  "8d46a076-d093-416d-a57b-8692cde13bf8"
+      tags.day:                             "25"
+      tags.environment:                     "dev"
+      type:                                 "Microsoft.KeyVault/vaults"
+
+  + Microsoft.KeyVault/vaults/kv-quotesapi-d25-dev/secrets/jwt-signing-key [2023-07-01]
+
+      apiVersion:       "2023-07-01"
+      id:               "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-dev/providers/Microsoft.KeyVault/vaults/kv-quotesapi-d25-dev/secrets/jwt-signing-key"
+      name:             "jwt-signing-key"
+      properties.value: "*******"
+      type:             "Microsoft.KeyVault/vaults/secrets"
+
+  + Microsoft.ServiceBus/namespaces/sb-quotesapi-day25-dev [2024-01-01]
+
+      apiVersion:                     "2024-01-01"
+      id:                             "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-dev/providers/Microsoft.ServiceBus/namespaces/sb-quotesapi-day25-dev"
+      location:                       "centralindia"
+      name:                           "sb-quotesapi-day25-dev"
+      properties.disableLocalAuth:    true
+      properties.minimumTlsVersion:   "1.2"
+      properties.publicNetworkAccess: "Enabled"
+      properties.zoneRedundant:       false
+      sku.name:                       "Standard"
+      tags.day:                       "25"
+      tags.environment:               "dev"
+      type:                           "Microsoft.ServiceBus/namespaces"
+
+  + Microsoft.ServiceBus/namespaces/sb-quotesapi-day25-dev/topics/quote-events [2024-01-01]
+
+      apiVersion:                            "2024-01-01"
+      id:                                    "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-dev/providers/Microsoft.ServiceBus/namespaces/sb-quotesapi-day25-dev/topics/quote-events"
+      name:                                  "quote-events"
+      properties.defaultMessageTimeToLive:   "P14D"
+      properties.requiresDuplicateDetection: false
+      type:                                  "Microsoft.ServiceBus/namespaces/topics"
+
+  + Microsoft.ServiceBus/namespaces/sb-quotesapi-day25-dev/topics/quote-events/subscriptions/sub-audit [2024-01-01]
+
+      apiVersion:                                  "2024-01-01"
+      id:                                          "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-dev/providers/Microsoft.ServiceBus/namespaces/sb-quotesapi-day25-dev/topics/quote-events/subscriptions/sub-audit"
+      name:                                        "sub-audit"
+      properties.deadLetteringOnMessageExpiration: true
+      properties.defaultMessageTimeToLive:         "P14D"
+      properties.lockDuration:                     "PT1M"
+      properties.maxDeliveryCount:                 3
+      type:                                        "Microsoft.ServiceBus/namespaces/topics/subscriptions"
+
+  + Microsoft.ServiceBus/namespaces/sb-quotesapi-day25-dev/topics/quote-events/subscriptions/sub-notifications [2024-01-01]
+
+      apiVersion:                                  "2024-01-01"
+      id:                                          "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-dev/providers/Microsoft.ServiceBus/namespaces/sb-quotesapi-day25-dev/topics/quote-events/subscriptions/sub-notifications"
+      name:                                        "sub-notifications"
+      properties.deadLetteringOnMessageExpiration: true
+      properties.defaultMessageTimeToLive:         "P14D"
+      properties.lockDuration:                     "PT1M"
+      properties.maxDeliveryCount:                 3
+      type:                                        "Microsoft.ServiceBus/namespaces/topics/subscriptions"
+
+  + Microsoft.Sql/servers/sql-quotesapi-day25-dev [2023-08-01-preview]
+
+      apiVersion:                                          "2023-08-01-preview"
+      id:                                                  "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-dev/providers/Microsoft.Sql/servers/sql-quotesapi-day25-dev"
+      location:                                            "centralindia"
+      name:                                                "sql-quotesapi-day25-dev"
+      properties.administrators.administratorType:         "ActiveDirectory"
+      properties.administrators.azureADOnlyAuthentication: true
+      properties.administrators.login:                     "*******"
+      properties.administrators.principalType:             "User"
+      properties.administrators.sid:                       "4eece2d1-e3b7-4754-a99a-afc480a96fc8"
+      properties.administrators.tenantId:                  "8d46a076-d093-416d-a57b-8692cde13bf8"
+      properties.minimalTlsVersion:                        "1.2"
+      properties.publicNetworkAccess:                      "Enabled"
+      tags.day:                                            "25"
+      tags.environment:                                    "dev"
+      type:                                                "Microsoft.Sql/servers"
+
+  + Microsoft.Sql/servers/sql-quotesapi-day25-dev/databases/quotesapi [2023-08-01-preview]
+
+      apiVersion:              "2023-08-01-preview"
+      id:                      "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-dev/providers/Microsoft.Sql/servers/sql-quotesapi-day25-dev/databases/quotesapi"
+      location:                "centralindia"
+      name:                    "quotesapi"
+      properties.maxSizeBytes: 2147483648
+      sku.name:                "Basic"
+      tags.day:                "25"
+      tags.environment:        "dev"
+      type:                    "Microsoft.Sql/servers/databases"
+
+  + Microsoft.Sql/servers/sql-quotesapi-day25-dev/firewallRules/AllowAzureServices [2023-08-01-preview]
+
+      apiVersion:                "2023-08-01-preview"
+      id:                        "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-dev/providers/Microsoft.Sql/servers/sql-quotesapi-day25-dev/firewallRules/AllowAzureServices"
+      name:                      "AllowAzureServices"
+      properties.endIpAddress:   "0.0.0.0"
+      properties.startIpAddress: "0.0.0.0"
+      type:                      "Microsoft.Sql/servers/firewallRules"
+
+Resource changes: 10 to create, 4 unsupported.
+
+Diagnostics (4): 
+[extensionResourceId('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-dev/providers/Microsoft.ServiceBus/namespaces/sb-quotesapi-day25-dev', 'Microsoft.Authorization/roleAssignments', guid('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-dev/providers/Microsoft.ServiceBus/namespaces/sb-quotesapi-day25-dev', reference('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-dev/providers/Microsoft.App/containerApps/quotes-api-day25-dev', '2024-03-01', 'full').identity.principalId, 'ServiceBusDataSender'))] (Unsupported) Changes to the resource declared at 'properties.template.resources[4].properties.template.resources[0]' on line 1 and column 23088 cannot be analyzed because its resource ID or API version cannot be calculated until the deployment is under way. Please see https://aka.ms/WhatIfUnidentifiableResource for more guidance.
+[extensionResourceId('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-dev/providers/Microsoft.ServiceBus/namespaces/sb-quotesapi-day25-dev', 'Microsoft.Authorization/roleAssignments', guid('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-dev/providers/Microsoft.ServiceBus/namespaces/sb-quotesapi-day25-dev', reference('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-dev/providers/Microsoft.App/containerApps/quotes-api-day25-dev', '2024-03-01', 'full').identity.principalId, 'ServiceBusDataReceiver'))] (Unsupported) Changes to the resource declared at 'properties.template.resources[4].properties.template.resources[1]' on line 1 and column 23693 cannot be analyzed because its resource ID or API version cannot be calculated until the deployment is under way. Please see https://aka.ms/WhatIfUnidentifiableResource for more guidance.
+[extensionResourceId('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-dev/providers/Microsoft.KeyVault/vaults/kv-quotesapi-d25-dev', 'Microsoft.Authorization/roleAssignments', guid('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-dev/providers/Microsoft.KeyVault/vaults/kv-quotesapi-d25-dev', reference('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-dev/providers/Microsoft.App/containerApps/quotes-api-day25-dev', '2024-03-01', 'full').identity.principalId, 'KeyVaultSecretsUser'))] (Unsupported) Changes to the resource declared at 'properties.template.resources[4].properties.template.resources[2]' on line 1 and column 24302 cannot be analyzed because its resource ID or API version cannot be calculated until the deployment is under way. Please see https://aka.ms/WhatIfUnidentifiableResource for more guidance.
+[extensionResourceId('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ContainerRegistry/registries/cr2i2oapij4zsrc', 'Microsoft.Authorization/roleAssignments', guid('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ContainerRegistry/registries/cr2i2oapij4zsrc', reference('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-dev/providers/Microsoft.App/containerApps/quotes-api-day25-dev', '2024-03-01', 'full').identity.principalId, 'AcrPull'))] (Unsupported) Changes to the resource declared at 'properties.template.resources[5].properties.template.resources[0]' on line 1 and column 26038 cannot be analyzed because its resource ID or API version cannot be calculated until the deployment is under way. Please see https://aka.ms/WhatIfUnidentifiableResource for more guidance.
+

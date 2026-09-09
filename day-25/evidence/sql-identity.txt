@@ -1,0 +1,53 @@
+﻿=== Azure SQL Server: azureADOnlyAuthentication (no SQL password path exists) ===
+--- dev ---
+{
+  "administrators": {
+    "administratorType": "ActiveDirectory",
+    "azureAdOnlyAuthentication": true,
+    "login": "ayush.sinha7@s.amity.edu",
+    "principalType": "User",
+    "sid": "4eece2d1-e3b7-4754-a99a-afc480a96fc8",
+    "tenantId": "8d46a076-d093-416d-a57b-8692cde13bf8"
+  },
+  "name": "sql-quotesapi-day25-dev"
+}
+--- prod ---
+{
+  "administrators": {
+    "administratorType": "ActiveDirectory",
+    "azureAdOnlyAuthentication": true,
+    "login": "ayush.sinha7@s.amity.edu",
+    "principalType": "User",
+    "sid": "4eece2d1-e3b7-4754-a99a-afc480a96fc8",
+    "tenantId": "8d46a076-d093-416d-a57b-8692cde13bf8"
+  },
+  "name": "sql-quotesapi-day25-prod"
+}
+
+=== T-SQL: container app system-assigned identity created as an external (Entra) database user and added to db_datareader/db_datawriter ===
+--- dev database: quotesapi (executed via Invoke-Sqlcmd -AccessToken, AAD admin token, no SQL login/password used) ---
+name                 type_desc     role_name
+----                 ---------     ---------
+quotes-api-day25-dev EXTERNAL_USER db_datareader
+quotes-api-day25-dev EXTERNAL_USER db_datawriter
+--- prod database: quotesapi ---
+name                  type_desc     role_name
+----                  ---------     ---------
+quotes-api-day25-prod EXTERNAL_USER db_datareader
+quotes-api-day25-prod EXTERNAL_USER db_datawriter
+
+=== Firewall rules ===
+A temporary TempAdminAccess rule (this machine's public IP) was added to
+both servers to run the T-SQL grant above as the Entra admin, then removed
+immediately after. Final state - only AllowAzureServices remains, and no
+rule permits password-based access since both servers have
+azureADOnlyAuthentication=true (SQL authentication is not just unused, it
+is disabled at the server level):
+--- dev ---
+Name                StartIpAddress    EndIpAddress
+------------------  ----------------  --------------
+AllowAzureServices  0.0.0.0           0.0.0.0
+--- prod ---
+Name                StartIpAddress    EndIpAddress
+------------------  ----------------  --------------
+AllowAzureServices  0.0.0.0           0.0.0.0

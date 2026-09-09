@@ -1,0 +1,47 @@
+﻿az : WARNING: A new Bicep release is available: v0.47.16. Upgrade now by running "az bicep upgrade".
+At line:3 char:1
++ az deployment group what-if --resource-group thinkschool-day25-prod - ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (WARNING: A new ...bicep upgrade".:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Note: The result may contain false positive predictions (noise).
+You can help us improve the accuracy of the result by opening an issue here: https://aka.ms/WhatIfIssues
+NOTICE! - Want to get What-if without noise? Move to Deployment Stacks What-If https://aka.ms/stackswhatifGA
+
+Resource and property changes are indicated with these symbols:
+  ! Deploy
+  x Unsupported
+  * Ignore
+
+The deployment will update the following scopes:
+
+Scope: /
+
+
+
+
+
+
+Scope: /subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-prod
+
+  ! Microsoft.App/containerApps/quotes-api-day25-prod
+  ! Microsoft.KeyVault/vaults/kv-quotesapi-d25-prod
+  ! Microsoft.KeyVault/vaults/kv-quotesapi-d25-prod/secrets/jwt-signing-key
+  ! Microsoft.ServiceBus/namespaces/sb-quotesapi-day25-prod
+  ! Microsoft.ServiceBus/namespaces/sb-quotesapi-day25-prod/topics/quote-events
+  ! Microsoft.ServiceBus/namespaces/sb-quotesapi-day25-prod/topics/quote-events/subscriptions/sub-audit
+  ! Microsoft.ServiceBus/namespaces/sb-quotesapi-day25-prod/topics/quote-events/subscriptions/sub-notifications
+  ! Microsoft.Sql/servers/sql-quotesapi-day25-prod
+  ! Microsoft.Sql/servers/sql-quotesapi-day25-prod/databases/quotesapi
+  ! Microsoft.Sql/servers/sql-quotesapi-day25-prod/firewallRules/AllowAzureServices
+  * Microsoft.Sql/servers/sql-quotesapi-day25-prod/databases/master
+
+Resource changes: 10 to deploy, 4 unsupported, 1 to ignore.
+
+Diagnostics (4): 
+[extensionResourceId('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-prod/providers/Microsoft.ServiceBus/namespaces/sb-quotesapi-day25-prod', 'Microsoft.Authorization/roleAssignments', guid('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-prod/providers/Microsoft.ServiceBus/namespaces/sb-quotesapi-day25-prod', reference('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-prod/providers/Microsoft.App/containerApps/quotes-api-day25-prod', '2024-03-01', 'full').identity.principalId, 'ServiceBusDataSender'))] (Unsupported) Changes to the resource declared at 'properties.template.resources[4].properties.template.resources[0]' on line 1 and column 23088 cannot be analyzed because its resource ID or API version cannot be calculated until the deployment is under way. Please see https://aka.ms/WhatIfUnidentifiableResource for more guidance.
+[extensionResourceId('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-prod/providers/Microsoft.ServiceBus/namespaces/sb-quotesapi-day25-prod', 'Microsoft.Authorization/roleAssignments', guid('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-prod/providers/Microsoft.ServiceBus/namespaces/sb-quotesapi-day25-prod', reference('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-prod/providers/Microsoft.App/containerApps/quotes-api-day25-prod', '2024-03-01', 'full').identity.principalId, 'ServiceBusDataReceiver'))] (Unsupported) Changes to the resource declared at 'properties.template.resources[4].properties.template.resources[1]' on line 1 and column 23693 cannot be analyzed because its resource ID or API version cannot be calculated until the deployment is under way. Please see https://aka.ms/WhatIfUnidentifiableResource for more guidance.
+[extensionResourceId('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-prod/providers/Microsoft.KeyVault/vaults/kv-quotesapi-d25-prod', 'Microsoft.Authorization/roleAssignments', guid('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-prod/providers/Microsoft.KeyVault/vaults/kv-quotesapi-d25-prod', reference('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-prod/providers/Microsoft.App/containerApps/quotes-api-day25-prod', '2024-03-01', 'full').identity.principalId, 'KeyVaultSecretsUser'))] (Unsupported) Changes to the resource declared at 'properties.template.resources[4].properties.template.resources[2]' on line 1 and column 24302 cannot be analyzed because its resource ID or API version cannot be calculated until the deployment is under way. Please see https://aka.ms/WhatIfUnidentifiableResource for more guidance.
+[extensionResourceId('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ContainerRegistry/registries/cr2i2oapij4zsrc', 'Microsoft.Authorization/roleAssignments', guid('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ContainerRegistry/registries/cr2i2oapij4zsrc', reference('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-prod/providers/Microsoft.App/containerApps/quotes-api-day25-prod', '2024-03-01', 'full').identity.principalId, 'AcrPull'))] (Unsupported) Changes to the resource declared at 'properties.template.resources[5].properties.template.resources[0]' on line 1 and column 26038 cannot be analyzed because its resource ID or API version cannot be calculated until the deployment is under way. Please see https://aka.ms/WhatIfUnidentifiableResource for more guidance.
+

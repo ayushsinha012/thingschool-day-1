@@ -1,0 +1,123 @@
+﻿=== DEV: quotes-api-day25-dev app settings/secrets ===
+
+--- az containerapp show --query properties.configuration.secrets ---
+[
+  {
+    "identity": "system",
+    "keyVaultUrl": "https://kv-quotesapi-d25-dev.vault.azure.net/secrets/jwt-signing-key",
+    "name": "jwt-signing-key"
+  }
+]
+
+--- az containerapp secret list (Key Vault reference resolution) ---
+[
+  {
+    "identity": "system",
+    "keyVaultUrl": "https://kv-quotesapi-d25-dev.vault.azure.net/secrets/jwt-signing-key",
+    "name": "jwt-signing-key"
+  }
+]
+
+--- az containerapp show --query properties.template.containers[0].env (plain + secretRef only, no plaintext values for secrets) ---
+[
+  {
+    "name": "PORT",
+    "value": "8080"
+  },
+  {
+    "name": "Jwt__Key",
+    "secretRef": "jwt-signing-key"
+  },
+  {
+    "name": "Entra__TenantId",
+    "value": "8d46a076-d093-416d-a57b-8692cde13bf8"
+  },
+  {
+    "name": "Entra__ClientId",
+    "value": "953b5bcb-682b-47b4-a116-8936323f5bec"
+  },
+  {
+    "name": "Entra__Audience",
+    "value": "api://953b5bcb-682b-47b4-a116-8936323f5bec"
+  },
+  {
+    "name": "ServiceBus__FullyQualifiedNamespace",
+    "value": "sb-quotesapi-day25-dev.servicebus.windows.net"
+  },
+  {
+    "name": "ConnectionStrings__AzureSql",
+    "value": "Server=tcp:sql-quotesapi-day25-dev.database.windows.net,1433;Database=quotesapi;Authentication=Active Directory Default;Encrypt=True;TrustServerCertificate=False;"
+  }
+]
+
+--- az containerapp show --query properties.configuration.registries (image pull identity, no username/password) ---
+[
+  {
+    "identity": "system",
+    "passwordSecretRef": "",
+    "server": "cr2i2oapij4zsrc.azurecr.io",
+    "username": ""
+  }
+]
+
+=== PROD: quotes-api-day25-prod app settings/secrets ===
+
+--- az containerapp show --query properties.configuration.secrets ---
+[
+  {
+    "identity": "system",
+    "keyVaultUrl": "https://kv-quotesapi-d25-prod.vault.azure.net/secrets/jwt-signing-key",
+    "name": "jwt-signing-key"
+  }
+]
+
+--- az containerapp secret list (Key Vault reference resolution) ---
+[
+  {
+    "identity": "system",
+    "keyVaultUrl": "https://kv-quotesapi-d25-prod.vault.azure.net/secrets/jwt-signing-key",
+    "name": "jwt-signing-key"
+  }
+]
+
+--- az containerapp show --query properties.template.containers[0].env ---
+[
+  {
+    "name": "PORT",
+    "value": "8080"
+  },
+  {
+    "name": "Jwt__Key",
+    "secretRef": "jwt-signing-key"
+  },
+  {
+    "name": "Entra__TenantId",
+    "value": "8d46a076-d093-416d-a57b-8692cde13bf8"
+  },
+  {
+    "name": "Entra__ClientId",
+    "value": "953b5bcb-682b-47b4-a116-8936323f5bec"
+  },
+  {
+    "name": "Entra__Audience",
+    "value": "api://953b5bcb-682b-47b4-a116-8936323f5bec"
+  },
+  {
+    "name": "ServiceBus__FullyQualifiedNamespace",
+    "value": "sb-quotesapi-day25-prod.servicebus.windows.net"
+  },
+  {
+    "name": "ConnectionStrings__AzureSql",
+    "value": "Server=tcp:sql-quotesapi-day25-prod.database.windows.net,1433;Database=quotesapi;Authentication=Active Directory Default;Encrypt=True;TrustServerCertificate=False;"
+  }
+]
+
+--- az containerapp show --query properties.configuration.registries ---
+[
+  {
+    "identity": "system",
+    "passwordSecretRef": "",
+    "server": "cr2i2oapij4zsrc.azurecr.io",
+    "username": ""
+  }
+]

@@ -1,0 +1,100 @@
+=== Bicep validation ===
+$ az bicep build --file main.bicep
+(no output - clean)
+
+$ az bicep lint --file main.bicep
+(no output - clean)
+
+$ DEV_JWT_SIGNING_KEY=<32+ chars> az bicep build-params --file params/dev.bicepparam
+(no output - clean)
+
+$ PROD_JWT_SIGNING_KEY=<32+ chars> az bicep build-params --file params/prod.bicepparam
+(no output - clean)
+
+Bicep CLI version 0.46.1 (545b338e2c)
+
+=== What-if against thinkschool-day25-dev (isolated RG, nothing pre-existing) ===
+Resource changes: 10 to create, 4 unsupported (role-assignment GUIDs that
+what-if cannot precompute before the identity exists - expected, not an
+error). No modifies, no deletes. Full output: dev-whatif.txt.
+
+=== Existing Entra ID app registration reused for QuotesApi (no duplicate registration created) ===
+{
+  "appId": "953b5bcb-682b-47b4-a116-8936323f5bec",
+  "createdDateTime": "2026-08-11T09:52:37Z",
+  "displayName": "QuotesApi",
+  "identifierUris": [
+    "api://953b5bcb-682b-47b4-a116-8936323f5bec"
+  ],
+  "signInAudience": "AzureADMyOrg"
+}
+
+=== Deployed API's Entra config (app settings, not secrets - tenant/client/audience are public identifiers, not credentials) ===
+$ az containerapp show --name quotes-api-day25-dev --resource-group thinkschool-day25-dev --query "properties.template.containers[0].env[?starts_with(name,'Entra')]" -o json
+[
+  {
+    "name": "Entra__TenantId",
+    "value": "8d46a076-d093-416d-a57b-8692cde13bf8"
+  },
+  {
+    "name": "Entra__ClientId",
+    "value": "953b5bcb-682b-47b4-a116-8936323f5bec"
+  },
+  {
+    "name": "Entra__Audience",
+    "value": "api://953b5bcb-682b-47b4-a116-8936323f5bec"
+  }
+]
+
+=== Entra tenant OIDC discovery document resolves (the app's Authority for the "Entra" JwtBearer scheme is real and live) ===
+GET https://login.microsoftonline.com/8d46a076-d093-416d-a57b-8692cde13bf8/v2.0/.well-known/openid-configuration -> 200
+issuer: https://login.microsoftonline.com/8d46a076-d093-416d-a57b-8692cde13bf8/v2.0
+
+=== Unauthenticated request to a policy-protected endpoint (proves the dual JWT SmartScheme is active and rejecting anonymous callers) ===
+POST https://quotes-api-day25-dev.politeocean-3efec37e.centralindia.azurecontainerapps.io/api/quotes (no Authorization header) -> 401 Unauthorized
+
+=== Interactive Entra user sign-in was NOT attempted ===
+A full browser-based sign-in against the reused QuotesApi app registration
+would require interactive MFA and cannot be safely automated in this
+session (Step 20 of the task explicitly allows verifying configuration
+instead of fabricating a login in this case). What was verified instead,
+without faking success:
+- az account get-access-token for the app's own audience correctly
+  requires interactive consent (proves the app registration and tenant
+  are real and enforce normal Entra consent, not bypassed):
+  AADSTS65001: The user or administrator has not consented to use the
+  application with ID '04b07795-8ddb-461a-bbee-02f9e1bf7b46' named
+  'Microsoft Azure CLI'. Send an interactive authorization request for
+  this user and resource.
+- The deployed API's Entra__TenantId/ClientId/Audience configuration
+  (above) matches the real app registration and tenant exactly.
+- The OIDC discovery document the API's Authority points at (above)
+  resolves and returns the same issuer the API validates against.
+- An unauthenticated request to a policy-protected endpoint is rejected
+  with 401 (above), proving the authentication middleware is genuinely
+  active in the deployed revision, not just configured and unused.
+
+=== Health checks: both environments, after all identity/RBAC/Key Vault wiring ===
+GET https://quotes-api-day25-dev.politeocean-3efec37e.centralindia.azurecontainerapps.io/health -> 200 Healthy
+GET https://quotes-api-day25-prod.politeocean-3efec37e.centralindia.azurecontainerapps.io/health -> 200 Healthy
+
+=== Final Azure state ===
+Resource group thinkschool-day25-dev: quotes-api-day25-dev (Container App,
+SystemAssigned identity), sql-quotesapi-day25-dev (+ database quotesapi,
+Entra-ID-only), sb-quotesapi-day25-dev (+ topic quote-events + subscriptions
+sub-audit/sub-notifications, disableLocalAuth=true), kv-quotesapi-d25-dev
+(RBAC-authorized, 1 secret: jwt-signing-key). All Succeeded.
+
+Resource group thinkschool-day25-prod: quotes-api-day25-prod (Container App,
+SystemAssigned identity), sql-quotesapi-day25-prod (+ database quotesapi,
+Entra-ID-only), sb-quotesapi-day25-prod (+ topic quote-events + subscriptions
+sub-audit/sub-notifications, disableLocalAuth=true), kv-quotesapi-d25-prod
+(RBAC-authorized, 1 secret: jwt-signing-key). All Succeeded.
+
+Neither resource group, and no resource inside them, existed before this
+Day 25 implementation. thinkschool-rg and every resource already in it
+(quotes-api, quotes-bff, sb-quotesapi-thinkschool, the Day 23/24 resources,
+etc.) were not modified - the only change made to thinkschool-rg was two
+AcrPull role assignments on the shared cr2i2oapij4zsrc registry, granted to
+the two new Day 25 container app identities (an additive grant, not a
+modification of the registry or removal of any existing access).

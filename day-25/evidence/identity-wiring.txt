@@ -1,0 +1,49 @@
+﻿=== DEV: quotes-api-day25-dev managed identity ===
+{
+  "principalId": "2b3149ef-06d6-421d-80f7-c5ccb86736b0",
+  "tenantId": "8d46a076-d093-416d-a57b-8692cde13bf8",
+  "type": "SystemAssigned"
+}
+
+=== PROD: quotes-api-day25-prod managed identity ===
+{
+  "principalId": "a3972792-c2e6-485e-8edb-159c3173c904",
+  "tenantId": "8d46a076-d093-416d-a57b-8692cde13bf8",
+  "type": "SystemAssigned"
+}
+
+=== Role assignments: AcrPull (dev + prod identities on shared ACR) ===
+[
+  {
+    "createdBy": "4eece2d1-e3b7-4754-a99a-afc480a96fc8",
+    "createdOn": "2026-09-09T08:24:33.698861+00:00",
+    "id": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ContainerRegistry/registries/cr2i2oapij4zsrc/providers/Microsoft.Authorization/roleAssignments/f50a05c4-b477-4a99-8e90-2a0bad485034",
+    "name": "f50a05c4-b477-4a99-8e90-2a0bad485034",
+    "principalId": "2b3149ef-06d6-421d-80f7-c5ccb86736b0",
+    "principalName": "649fa837-8c64-45fe-b0ee-f12d3e8a4377",
+    "principalType": "ServicePrincipal",
+    "resourceGroup": "thinkschool-rg",
+    "roleDefinitionId": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/providers/Microsoft.Authorization/roleDefinitions/7f951dda-4ed3-4680-a7ca-43fe172d538d",
+    "roleDefinitionName": "AcrPull",
+    "scope": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ContainerRegistry/registries/cr2i2oapij4zsrc",
+    "type": "Microsoft.Authorization/roleAssignments",
+    "updatedBy": "4eece2d1-e3b7-4754-a99a-afc480a96fc8",
+    "updatedOn": "2026-09-09T08:24:33.698861+00:00"
+  },
+  {
+    "createdBy": "4eece2d1-e3b7-4754-a99a-afc480a96fc8",
+    "createdOn": "2026-09-09T08:29:15.506824+00:00",
+    "id": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ContainerRegistry/registries/cr2i2oapij4zsrc/providers/Microsoft.Authorization/roleAssignments/b5d9544d-c37a-4c44-91ab-d2a136d8a0ad",
+    "name": "b5d9544d-c37a-4c44-91ab-d2a136d8a0ad",
+    "principalId": "a3972792-c2e6-485e-8edb-159c3173c904",
+    "principalName": "8ebb0e34-443f-4ac5-8724-461663a78bf4",
+    "principalType": "ServicePrincipal",
+    "resourceGroup": "thinkschool-rg",
+    "roleDefinitionId": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/providers/Microsoft.Authorization/roleDefinitions/7f951dda-4ed3-4680-a7ca-43fe172d538d",
+    "roleDefinitionName": "AcrPull",
+    "scope": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ContainerRegistry/registries/cr2i2oapij4zsrc",
+    "type": "Microsoft.Authorization/roleAssignments",
+    "updatedBy": "4eece2d1-e3b7-4754-a99a-afc480a96fc8",
+    "updatedOn": "2026-09-09T08:29:15.506824+00:00"
+  }
+]

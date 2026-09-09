@@ -1,0 +1,41 @@
+﻿=== Key Vault: RBAC authorization, no access policies ===
+--- dev ---
+{
+  "accessPolicies": [],
+  "enableRbacAuthorization": true
+}
+--- prod ---
+{
+  "accessPolicies": [],
+  "enableRbacAuthorization": true
+}
+
+=== RBAC: container app identity granted Key Vault Secrets User (read-only, no other permission) ===
+--- dev ---
+Principal                             Role                    Scope
+------------------------------------  ----------------------  -------------------------------------------------------------------------------------------------------------------------------------------------
+649fa837-8c64-45fe-b0ee-f12d3e8a4377  Key Vault Secrets User  /subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-dev/providers/Microsoft.KeyVault/vaults/kv-quotesapi-d25-dev
+--- prod ---
+Principal                             Role                    Scope
+------------------------------------  ----------------------  ---------------------------------------------------------------------------------------------------------------------------------------------------
+8ebb0e34-443f-4ac5-8724-461663a78bf4  Key Vault Secrets User  /subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-day25-prod/providers/Microsoft.KeyVault/vaults/kv-quotesapi-d25-prod
+
+=== Container Apps Key Vault reference actually configured on the app (the secret block references a keyVaultUrl, not a plaintext value) ===
+--- dev: az containerapp secret list ---
+[
+  {
+    "identity": "system",
+    "keyVaultUrl": "https://kv-quotesapi-d25-dev.vault.azure.net/secrets/jwt-signing-key",
+    "name": "jwt-signing-key"
+  }
+]
+--- prod: az containerapp secret list ---
+[
+  {
+    "identity": "system",
+    "keyVaultUrl": "https://kv-quotesapi-d25-prod.vault.azure.net/secrets/jwt-signing-key",
+    "name": "jwt-signing-key"
+  }
+]
+
+=== Application-level proof the Key Vault reference resolved correctly: the app's own JwtAuthenticationExtensions.AddDualJwtAuthentication throws InvalidOperationException at startup if Jwt:Key is missing or under 32 bytes. Both apps started and reached RunningAtMaxScale/Healthy (see dev-deployment.txt / prod-deployment.txt console logs), which is only possible if the Container Apps platform actually fetched the real secret value from Key Vault via the identity - the app never sees a Key Vault URL, only the resolved value injected as Jwt__Key. ===

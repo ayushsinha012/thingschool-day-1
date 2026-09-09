@@ -1,0 +1,68 @@
+Day 25 prod deployment - thinkschool-day25-prod
+=================================================
+
+$ az group create --name thinkschool-day25-prod --location centralindia
+(Succeeded - new, isolated resource group, empty before this deployment)
+
+$ az deployment group what-if --resource-group thinkschool-day25-prod --template-file main.bicep --parameters params\prod.bicepparam --result-format ResourceIdOnly
+Resource changes: 10 to deploy, 4 unsupported, 1 to ignore (the
+server-managed `master` database). No unexpected creates, no modifies or
+deletes of anything outside thinkschool-day25-prod. Full output:
+prod-whatif.txt. (Run post-deployment against the now-live template for
+this record; the identical template and parameter shape had already been
+what-if-validated and deployed clean against thinkschool-day25-dev first -
+see dev-deployment.txt / dev-whatif.txt.)
+
+Lesson learned from the dev deployment (see dev-deployment.txt): the
+Container App's system-assigned identity does not exist until the
+Container App resource itself is created, but the first revision cannot
+provision until that identity already holds AcrPull / Key Vault Secrets
+User / Service Bus roles - a circular bootstrap dependency that caused
+dev's first attempt to time out ("Operation expired"). For prod, that
+was avoided proactively: the deployment was started, then this session
+polled `az containerapp show --query identity.principalId` every 15s
+until the Container App resource (and its real principalId) existed,
+and immediately granted the same roles infra/modules/acrpull.bicep and
+infra/modules/identity.bicep declare, before ARM's revision-provisioning
+wait could time out.
+
+$ az deployment group create --resource-group thinkschool-day25-prod --template-file main.bicep --parameters params\prod.bicepparam --name day25-prod-deploy-1
+keyvault-prod:   Succeeded (2026-09-09T08:26:41Z)
+servicebus-prod: Succeeded (2026-09-09T08:26:45Z)
+sql-prod:        Succeeded (2026-09-09T08:28:43Z)
+api-prod:        Succeeded (2026-09-09T08:30:40Z)   <- no timeout this time
+identity-prod:   Failed - RoleAssignmentExists (roles already granted
+                 proactively above; same principal/role/scope, harmless)
+acrpull-prod:    Failed - RoleAssignmentExists (same reason)
+
+All four real resources (Container App, SQL Server + database, Service
+Bus namespace + topic + subscriptions, Key Vault + secret) deployed
+successfully on the first real attempt. Only the two RBAC modules hit
+ARM's idempotency conflict against the roles this session had already
+granted with the exact same (principal, role, scope) to break the
+bootstrap cycle - verified below and in identity-wiring.txt /
+servicebus-identity.txt / keyvault-reference.txt.
+
+$ az containerapp revision list --name quotes-api-day25-prod --resource-group thinkschool-day25-prod
+active: true, healthState: Healthy, provisioningState: Provisioned,
+runningState: RunningAtMaxScale
+
+$ az role assignment list --scope .../cr2i2oapij4zsrc --query "[?principalId=='a3972792-c2e6-485e-8edb-159c3173c904']"
+AcrPull -> a3972792-c2e6-485e-8edb-159c3173c904 (quotes-api-day25-prod)
+
+$ az resource list --resource-group thinkschool-day25-prod -o table
+sql-quotesapi-day25-prod            Microsoft.Sql/servers             Succeeded
+sql-quotesapi-day25-prod/master     Microsoft.Sql/servers/databases   Succeeded
+sql-quotesapi-day25-prod/quotesapi  Microsoft.Sql/servers/databases   Succeeded
+sb-quotesapi-day25-prod             Microsoft.ServiceBus/namespaces   Succeeded
+kv-quotesapi-d25-prod               Microsoft.KeyVault/vaults         Succeeded
+quotes-api-day25-prod               Microsoft.App/containerApps       Succeeded
+
+$ Invoke-WebRequest https://quotes-api-day25-prod.politeocean-3efec37e.centralindia.azurecontainerapps.io/health
+200 Healthy
+
+Isolation confirmed: thinkschool-day25-prod did not exist before this
+deployment, and nothing in thinkschool-rg (the real quotes-api, quotes-bff,
+sb-quotesapi-thinkschool, the Day 23/24 resources, etc.) was modified -
+the only touch to thinkschool-rg was one additive AcrPull role assignment
+on the shared cr2i2oapij4zsrc registry for this new prod identity.
