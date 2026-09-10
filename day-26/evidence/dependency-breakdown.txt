@@ -1,0 +1,83 @@
+{
+  "tables": [
+    {
+      "columns": [
+        {
+          "name": "target",
+          "type": "string"
+        },
+        {
+          "name": "type",
+          "type": "string"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "Count",
+          "type": "long"
+        },
+        {
+          "name": "Failures",
+          "type": "long"
+        },
+        {
+          "name": "P50Ms",
+          "type": "real"
+        },
+        {
+          "name": "P95Ms",
+          "type": "real"
+        },
+        {
+          "name": "P99Ms",
+          "type": "real"
+        }
+      ],
+      "name": "PrimaryResult",
+      "rows": [
+        [
+          "Users | main",
+          "sqlite",
+          "main",
+          516,
+          0,
+          1.39565,
+          6.5308,
+          29.8498
+        ],
+        [
+          "quotes.db | main",
+          "sqlite",
+          "main",
+          33,
+          0,
+          5.5943,
+          194.2663,
+          195.381
+        ],
+        [
+          "quote-events publish",
+          "servicebus",
+          "quote-events publish",
+          33,
+          0,
+          64.5839,
+          163.4083,
+          4144.0556
+        ],
+        [
+          "DefaultAzureCredential.GetToken",
+          "InProc | Microsoft.AAD",
+          "DefaultAzureCredential.GetToken",
+          1,
+          0,
+          25994.7728,
+          25994.7728,
+          25994.7728
+        ]
+      ]
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "tables": [
+    {
+      "columns": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "RequestCount",
+          "type": "long"
+        },
+        {
+          "name": "P50Ms",
+          "type": "real"
+        },
+        {
+          "name": "P99Ms",
+          "type": "real"
+        }
+      ],
+      "name": "PrimaryResult",
+      "rows": [
+        [
+          "quote-events process",
+          82,
+          120.6283,
+          945.6453
+        ],
+        [
+          "GET /api/quotes/",
+          59,
+          16.888,
+          54.6161
+        ],
+        [
+          "POST /api/quotes/",
+          42,
+          28.0758,
+          1409.2108
+        ],
+        [
+          "GET /api/quotes/{id:int}",
+          37,
+          620.6716,
+          2510.1427
+        ],
+        [
+          "POST /api/messaging/publish",
+          23,
+          64.2465,
+          147.0107
+        ],
+        [
+          "POST api/auth/login",
+          8,
+          3300.6883,
+          7685.0682
+        ],
+        [
+          "GET /health",
+          1,
+          3810.9788,
+          3810.9788
+        ],
+        [
+          "GET /api/quotes/performance/author-quotes",
+          1,
+          340.1176,
+          340.1176
+        ]
+      ]
+    }
+  ]
+}

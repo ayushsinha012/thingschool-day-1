@@ -1,0 +1,61 @@
+WARNING: A new Bicep release is available: v0.47.16. Upgrade now by running "az bicep upgrade".
+Note: The result may contain false positive predictions (noise).
+You can help us improve the accuracy of the result by opening an issue here: https://aka.ms/WhatIfIssues
+NOTICE! - Want to get What-if without noise? Move to Deployment Stacks What-If https://aka.ms/stackswhatifGA
+
+Resource and property changes are indicated with these symbols:
+  - Delete
+  ~ Modify
+  * Ignore
+
+The deployment will update the following scope:
+
+Scope: /subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg
+
+  ~ Microsoft.Insights/scheduledQueryRules/quotes-api-day26-error-rate-alert [2023-03-15-preview]
+    - properties.checkWorkspaceAlertsStorageConfigured: false
+    - properties.skipQueryValidation:                   false
+    ~ properties.description:                           "Day 26: quotes-api-day26 request error rate above 5 percent" => "Day 26: appi-2i2oapij4zsrc request error rate above 5 percent"
+
+  ~ Microsoft.ServiceBus/namespaces/sb-quotesapi-thinkschool/topics/quote-events/subscriptions/sub-day26-audit [2022-10-01-preview]
+    - properties.autoDeleteOnIdle:         "P10675199DT2H48M5.4775807S"
+    - properties.defaultMessageTimeToLive: "P10675199DT2H48M5.4775807S"
+    - properties.enableBatchedOperations:  true
+    - properties.isClientAffine:           false
+
+  ~ Microsoft.ServiceBus/namespaces/sb-quotesapi-thinkschool/topics/quote-events/subscriptions/sub-day26-notifications [2022-10-01-preview]
+    - properties.autoDeleteOnIdle:         "P10675199DT2H48M5.4775807S"
+    - properties.defaultMessageTimeToLive: "P10675199DT2H48M5.4775807S"
+    - properties.enableBatchedOperations:  true
+    - properties.isClientAffine:           false
+
+  * Microsoft.App/containerApps/quotes-api
+  * Microsoft.App/containerApps/quotes-api-day24-dev
+  * Microsoft.App/containerApps/quotes-api-day24-prod
+  * Microsoft.App/containerApps/quotes-bff
+  * Microsoft.App/managedEnvironments/thinkschool-env
+  * Microsoft.Cache/Redis/redis-quotesapi-thinkschool
+  * Microsoft.ContainerRegistry/registries/cr2i2oapij4zsrc
+  * Microsoft.Insights/components/appi-2i2oapij4zsrc
+  * Microsoft.ManagedIdentity/userAssignedIdentities/id-quotesApi-2i2oapij4zsrc
+  * Microsoft.OperationalInsights/workspaces/log-2i2oapij4zsrc
+  * Microsoft.OperationalInsights/workspaces/workspace-thinkschoolrgXVsL
+  * Microsoft.OperationalInsights/workspaces/workspace-thinkschoolrgqWEi
+  * Microsoft.Portal/dashboards/dash-2i2oapij4zsrc
+  * Microsoft.ServiceBus/namespaces/sb-quotesapi-day24-dev
+  * Microsoft.ServiceBus/namespaces/sb-quotesapi-day24-prod
+  * Microsoft.ServiceBus/namespaces/sb-quotesapi-thinkschool
+  * Microsoft.Sql/servers/sql-quotesapi-day24-dev
+  * Microsoft.Sql/servers/sql-quotesapi-day24-dev/databases/master
+  * Microsoft.Sql/servers/sql-quotesapi-day24-dev/databases/quotesapi
+  * Microsoft.Sql/servers/sql-quotesapi-day24-prod
+  * Microsoft.Sql/servers/sql-quotesapi-day24-prod/databases/master
+  * Microsoft.Sql/servers/sql-quotesapi-day24-prod/databases/quotesapi
+  * Microsoft.Sql/servers/thinkschool-day7-sql-0c0dda
+  * Microsoft.Sql/servers/thinkschool-day7-sql-0c0dda/databases/master
+  * Microsoft.Sql/servers/thinkschool-day7-sql-0c0dda/databases/thinkschool-day7
+  * Microsoft.Storage/storageAccounts/stday20quotesapi
+  * Microsoft.Web/staticSites/thinkschool-ayush-swa
+  * microsoft.insights/actiongroups/Application Insights Smart Detection
+
+Resource changes: 3 to modify, 28 to ignore.

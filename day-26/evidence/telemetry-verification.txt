@@ -1,0 +1,59 @@
+Single-trace verification: API -> Service Bus -> worker -> DB
+================================================================
+
+Query:
+union requests, dependencies
+| where operation_Id == "124af37ff165f59beb0b3c78fee29a24"
+| project timestamp, itemType, name, type, target, success, duration, operation_Id, operation_ParentId, id
+| order by timestamp asc
+
+Result (one real trace, captured from appi-2i2oapij4zsrc, cloud_RoleName
+quotes-api-day26):
+
+timestamp                     itemType    name                    type      target                success  duration(ms)  id                operation_ParentId
+2026-09-10T06:00:23.0733738Z  request     POST /api/messaging/publish              (root)          True     75.8555       a38ef69a1e788c47  124af37ff165f59beb0b3c78fee29a24 (= operation_Id, root span)
+2026-09-10T06:00:23.0740042Z  dependency  quote-events publish    servicebus  quote-events publish  True     74.3035       160b88fbb342ba05  a38ef69a1e788c47
+2026-09-10T06:00:23.1498839Z  request     quote-events process                     (worker/audit)  True     203.7861      6fcbf64c8547d093  160b88fbb342ba05
+2026-09-10T06:00:23.1532109Z  dependency  main                    sqlite      Users | main          True     0.7365        b33cb83718f5704e  6fcbf64c8547d093
+2026-09-10T06:00:23.1556635Z  request     quote-events process                     (worker/notif.) True     198.7793      3a7e3712a904aeaa  160b88fbb342ba05
+2026-09-10T06:00:23.1573706Z  dependency  main                    sqlite      Users | main          True     2.3635        0a9da350b9fba50c  3a7e3712a904aeaa
+
+Verified parent/child chain (all six rows share operation_Id
+124af37ff165f59beb0b3c78fee29a24 - i.e. one W3C trace):
+
+  a38ef69a1e788c47   POST /api/messaging/publish        (API layer, root span)
+    -> 160b88fbb342ba05  quote-events publish            (Service Bus producer span,
+                                                            parent = a38ef69a1e788c47)
+        -> 6fcbf64c8547d093  quote-events process          (worker span, sub-day26-audit,
+                                                             parent = 160b88fbb342ba05 -
+                                                             this is the W3C traceparent
+                                                             carried on the Service Bus
+                                                             message's ApplicationProperties
+                                                             and extracted by
+                                                             SubscriptionWorker.HandleMessageAsync)
+            -> b33cb83718f5704e  main (sqlite, Users|main)  (DB dependency, parent =
+                                                             6fcbf64c8547d093 - EF Core
+                                                             instrumentation span for the
+                                                             ProcessedMessages insert)
+        -> 3a7e3712a904aeaa  quote-events process          (worker span, sub-day26-notifications,
+                                                             parent = 160b88fbb342ba05 - the
+                                                             same topic message fanned out to
+                                                             the second, independent subscription)
+            -> 0a9da350b9fba50c  main (sqlite, Users|main)  (DB dependency, parent =
+                                                             3a7e3712a904aeaa)
+
+This confirms, from real Application Insights data (not inferred): the API
+request span is the parent of the Service Bus producer span; the producer
+span's id equals the operation_ParentId carried on the message and picked
+up by both competing consumer workers; and each worker's own DB write is a
+child of that worker's span. API -> Service Bus -> worker -> DB is one
+connected trace, not four independent operations that merely share a
+timestamp.
+
+Additional cross-check - subscription topology drained to zero active
+messages after this run (az servicebus topic subscription show), confirming
+the worker actually consumed what the API published rather than the
+messages sitting unconsumed:
+
+sub-day26-audit:         activeMessageCount=0
+sub-day26-notifications: activeMessageCount=0

@@ -1,0 +1,35 @@
+Application Insights resource used for Day 26 (existing, reused - not created)
+================================================================================
+
+Command:
+az monitor app-insights component show --app appi-2i2oapij4zsrc --resource-group thinkschool-rg
+
+Result (connectionString redacted):
+
+appId:              953353c3-e430-49bc-881e-3119ee999fbf
+applicationId:      appi-2i2oapij4zsrc
+name:               appi-2i2oapij4zsrc
+resourceGroup:      thinkschool-rg
+location:           centralindia
+kind:               web
+ingestionMode:      LogAnalytics (workspace-based)
+workspaceResourceId: /subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.OperationalInsights/workspaces/log-2i2oapij4zsrc
+connectionString:   InstrumentationKey=<redacted>;IngestionEndpoint=https://centralindia-0.in.applicationinsights.azure.com/;LiveEndpoint=https://centralindia.livediagnostics.monitor.azure.com/;ApplicationId=953353c3-e430-49bc-881e-3119ee999fbf
+tags:               azd-env-name=quotesapi-thinkschool
+retentionInDays:    365
+provisioningState:  Succeeded
+
+This is the real Application Insights resource that azd created for the
+QuotesApi Container Apps environment (tag azd-env-name=quotesapi-thinkschool).
+It was found via:
+
+  az resource list --resource-group thinkschool-rg -o table
+
+No new Application Insights resource was created for Day 26 - this existing,
+workspace-based resource is reused. Day 26 telemetry is isolated from the
+production quotes-api telemetry that may also land here by cloud role name:
+every OpenTelemetry Resource emitted by the Day 26 instrumented process is
+tagged service.name=quotes-api-day26, which Azure Monitor maps to
+cloud_RoleName. Every KQL query in kql/ filters on
+`cloud_RoleName == "quotes-api-day26"` so Day 26 evidence never mixes with
+unrelated telemetry that may exist in this resource.

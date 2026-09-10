@@ -1,0 +1,6 @@
+src/QuotesApi/bin/
+src/QuotesApi/obj/
+src/QuotesApi/quotes.db
+src/QuotesApi/quotes.db-shm
+src/QuotesApi/quotes.db-wal
+src/QuotesApi/.azure

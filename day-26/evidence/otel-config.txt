@@ -1,0 +1,87 @@
+OpenTelemetry configuration (Day 26)
+=====================================
+
+.NET SDK: 10.0.400
+Target framework: net10.0
+
+Packages added/used for observability (day-26/src/QuotesApi/QuotesApi.csproj):
+  Azure.Monitor.OpenTelemetry.AspNetCore        1.6.0   (already present, reused from Day 1/4)
+  OpenTelemetry.Instrumentation.EntityFrameworkCore  1.18.0-beta.1  (added for Day 26 - SQLite/EF Core dependency spans)
+  Azure.Messaging.ServiceBus                    7.20.2  (already present)
+  Azure.Identity                                1.21.0  (already present)
+
+Pipeline (Extensions/InfrastructureExtensions.cs, AddObservability):
+
+  services.AddOpenTelemetry()
+      .ConfigureResource(resource => resource.AddService(serviceName))   // service.name -> cloud_RoleName
+      .WithTracing(tracing => tracing
+          .AddSource(MessagingTelemetry.SourceName)                      // "QuotesApi.Messaging" custom spans
+          .AddAspNetCoreInstrumentation()
+          .AddHttpClientInstrumentation()
+          .AddEntityFrameworkCoreInstrumentation())
+      .WithMetrics(metrics => metrics
+          .AddAspNetCoreInstrumentation()
+          .AddHttpClientInstrumentation());
+
+  if (!string.IsNullOrWhiteSpace(connectionString))
+      openTelemetry.UseAzureMonitor(options => options.ConnectionString = connectionString);
+
+serviceName resolves from configuration key "ApplicationInsights:CloudRoleName", set to
+"quotes-api-day26" in appsettings.json - this becomes cloud_RoleName in every exported
+Application Insights row, which is how Day 26 telemetry is isolated/filterable in the
+shared appi-2i2oapij4zsrc resource.
+
+Connection string resolution - a real bug found and fixed in this copy:
+
+  Original (day-1) ResolveAppInsightsConnectionString used:
+    configuration[AppInsightsConnectionStringKey]
+    ?? configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]
+    ?? Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING")
+
+  appsettings.json sets "ApplicationInsights:ConnectionString" to "" (empty string, not
+  absent). configuration[key] returns that empty string, which is non-null, so the `??`
+  chain never fell through to the environment-variable fallback - UseAzureMonitor was
+  never actually called even with a real connection string supplied via environment
+  variable. Confirmed live: first run logged
+  "Azure Monitor OpenTelemetry export enabled: False" with the connection string set in
+  the process environment, and zero telemetry reached Application Insights after ~10
+  minutes and 150+ real requests.
+
+  Fixed in this copy by treating an empty/whitespace value as absent at each step
+  (three explicit null-or-whitespace checks instead of `??`). Rebuilt, reran: startup
+  now logs "Azure Monitor OpenTelemetry export enabled: True", and telemetry (254
+  requests, 706 dependencies at verification time) is confirmed in Application Insights
+  within a few minutes.
+
+Custom instrumentation (Service Bus trace propagation - automatic instrumentation does
+not stitch Service Bus publish/consume across the async boundary, so explicit
+ActivitySource spans were added per STEP 9):
+
+  Messaging/MessagingTelemetry.cs
+    ActivitySource "QuotesApi.Messaging"
+
+  Messaging/QuoteEventPublisher.cs (PublishAsync)
+    Starts a Producer-kind Activity ("{topic} publish"), injects its Activity.Id
+    (W3C traceparent) and TraceStateString into the ServiceBusMessage's
+    ApplicationProperties before sending.
+
+  Messaging/SubscriptionWorker.cs (HandleMessageAsync)
+    Reads the traceparent/tracestate back off the received message, starts a
+    Consumer-kind Activity ("{topic} process") using that as its parent context,
+    tags messaging.* attributes, and marks the activity Error on a poison message
+    or unhandled processing exception. The EF Core dependency span for the DB
+    write inside processor.ProcessAsync is therefore a child of this activity.
+
+Azure Monitor's exporter maps Server/Consumer-kind activities to the `requests`
+table and Client/Producer/Internal-kind activities to `dependencies` - so
+"quote-events process" (Consumer) appears as a request, and "quote-events publish"
+(Producer) and every EF Core SQLite command appear as dependencies. This is what
+makes the distributed-trace.kql join work without any extra correlation code.
+
+Database dependency - identified accurately, not mislabeled:
+  The application persists to SQLite (Data Source=quotes.db, EF Core
+  Microsoft.EntityFrameworkCore.Sqlite). OpenTelemetry.Instrumentation.EntityFrameworkCore
+  supports SQLite the same as any other EF Core provider, emitting dependency spans with
+  type=sqlite and target=<database file>|<connection data source>. There is no Azure SQL
+  in this Day 26 deployment - the KQL and README describe the dependency as SQLite
+  throughout, not Azure SQL.

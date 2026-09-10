@@ -1,0 +1,5 @@
+requests
+| where cloud_RoleName == "quotes-api-day26"
+| where timestamp > ago(2h)
+| summarize RequestCount = count(), P50Ms = percentile(duration, 50), P99Ms = percentile(duration, 99) by name
+| order by RequestCount desc

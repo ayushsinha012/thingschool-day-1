@@ -1,0 +1,10 @@
+let publishTraces = requests
+    | where cloud_RoleName == "quotes-api-day26"
+    | where name == "POST /api/messaging/publish"
+    | where timestamp > ago(2h)
+    | project operation_Id;
+union requests, dependencies
+| where cloud_RoleName == "quotes-api-day26"
+| where operation_Id in (publishTraces)
+| project timestamp, itemType, name, type, target, success, duration, operation_Id, operation_ParentId, id
+| order by operation_Id asc, timestamp asc

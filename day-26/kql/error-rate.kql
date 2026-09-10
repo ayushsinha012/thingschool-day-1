@@ -1,0 +1,6 @@
+requests
+| where cloud_RoleName == "quotes-api-day26"
+| where timestamp > ago(2h)
+| summarize Total = count(), Failed = countif(success == false) by bin(timestamp, 5m)
+| extend ErrorRatePercent = iff(Total == 0, 0.0, round(100.0 * Failed / Total, 2))
+| order by timestamp asc

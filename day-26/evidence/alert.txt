@@ -1,0 +1,70 @@
+{
+  "actions": null,
+  "autoMitigate": true,
+  "checkWorkspaceAlertsStorageConfigured": false,
+  "createdWithApiVersion": "2021-08-01",
+  "criteria": {
+    "allOf": [
+      {
+        "dimensions": [],
+        "failingPeriods": {
+          "minFailingPeriodsToAlert": 1,
+          "numberOfEvaluationPeriods": 1
+        },
+        "metricMeasureColumn": null,
+        "metricName": null,
+        "operator": "GreaterThan",
+        "query": "requests | where cloud_RoleName == 'quotes-api-day26' | summarize Total = count(), Failed = countif(success == false) | extend ErrorRatePercent = iff(Total == 0, 0.0, round(100.0 * Failed / Total, 2)) | where ErrorRatePercent > 5",
+        "resourceIdColumn": null,
+        "threshold": 0.0,
+        "timeAggregation": "Count"
+      }
+    ]
+  },
+  "description": "Day 26: quotes-api-day26 request error rate above 5 percent",
+  "displayName": null,
+  "enabled": true,
+  "etag": null,
+  "evaluationFrequency": "0:05:00",
+  "id": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/microsoft.insights/scheduledqueryrules/quotes-api-day26-error-rate-alert",
+  "isLegacyLogAnalyticsRule": null,
+  "isWorkspaceAlertsStorageConfigured": null,
+  "kind": null,
+  "location": "centralindia",
+  "muteActionsDuration": null,
+  "name": "quotes-api-day26-error-rate-alert",
+  "overrideQueryTimeRange": null,
+  "resourceGroup": "thinkschool-rg",
+  "scopes": [
+    "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/microsoft.insights/components/appi-2i2oapij4zsrc"
+  ],
+  "severity": 3,
+  "skipQueryValidation": false,
+  "systemData": {
+    "createdAt": "2026-09-10T05:49:08.544627+00:00",
+    "createdBy": "ayush.sinha7@s.amity.edu",
+    "createdByType": "User",
+    "lastModifiedAt": "2026-09-10T05:49:08.544627+00:00",
+    "lastModifiedBy": "ayush.sinha7@s.amity.edu",
+    "lastModifiedByType": "User"
+  },
+  "tags": null,
+  "targetResourceTypes": null,
+  "type": "Microsoft.Insights/scheduledQueryRules",
+  "windowSize": "0:15:00"
+}
+
+--------------------------------------------------------------------------
+Fired-alert check (Azure Monitor Alerts Management API):
+
+az rest --method get --url "https://management.azure.com/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/providers/Microsoft.AlertsManagement/alerts?api-version=2019-05-05-preview&targetResource=.../components/appi-2i2oapij4zsrc"
+
+Result: {"value": []}
+
+No fired alert instance yet at verification time - the rule was created
+minutes before this check and a scheduled query rule's first evaluation
+cycle can take up to one evaluation-frequency interval (5 minutes) to run.
+The rule itself (query, scope, threshold, severity, frequency, enabled
+state) is confirmed live in Azure via `az monitor scheduled-query show`
+above; whether it has fired is a separate, time-dependent fact reported
+here as observed, not assumed.

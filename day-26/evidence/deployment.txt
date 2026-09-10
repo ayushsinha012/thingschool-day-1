@@ -1,0 +1,98 @@
+Day 26 deployment scope
+========================
+
+Decision: run the Day 26 instrumented QuotesApi as a local process configured
+against real, isolated Azure resources, rather than deploying a new revision
+of the production quotes-api Container App.
+
+Why:
+- STEP 4 of the exercise explicitly says not to blindly modify the existing
+  production Container App, and to prefer an isolated environment/resources
+  for validation.
+- Both the API and its Service Bus workers (SubscriptionAWorker/BWorker) run
+  in-process, in the same ASP.NET Core host - the "worker" is a
+  BackgroundService inside the same binary, not a separate deployable. A
+  distributed trace across API -> Service Bus -> worker -> DB does not
+  require a second container; it requires the same process to publish to a
+  real topic and consume from a real, isolated subscription with real trace
+  propagation - which a local run against real Azure PaaS resources proves
+  exactly as genuinely as a Container Apps revision would, without touching
+  production or provisioning a second container environment.
+- This keeps the blast radius to: two new Service Bus subscriptions
+  (additive) and one new Azure Monitor alert rule (additive) in the shared
+  thinkschool-rg resource group. Nothing pre-existing was modified.
+
+Azure resources used (actual names):
+
+  Resource group (shared, reused, unmodified):  thinkschool-rg
+  Application Insights (existing, reused):      appi-2i2oapij4zsrc
+    - created by azd for the QuotesApi Container Apps environment
+      (tag azd-env-name=quotesapi-thinkschool)
+    - workspace-based, linked Log Analytics workspace log-2i2oapij4zsrc
+    - not modified - only queried and sent telemetry to, tagged with a
+      distinct cloud_RoleName (quotes-api-day26) so Day 26 data is isolated
+  Service Bus namespace (existing, reused):     sb-quotesapi-thinkschool
+  Service Bus topic (existing, reused):         quote-events
+  Service Bus subscriptions (new, additive):    sub-day26-audit
+                                                 sub-day26-notifications
+    created via:
+      az servicebus topic subscription create --resource-group thinkschool-rg
+        --namespace-name sb-quotesapi-thinkschool --topic-name quote-events
+        --name sub-day26-audit --max-delivery-count 3 --lock-duration PT1M
+        --enable-dead-lettering-on-message-expiration true
+      (and the same for sub-day26-notifications)
+    existing sub-audit / sub-notifications subscriptions were left untouched.
+  Azure Monitor alert rule (new, additive):     quotes-api-day26-error-rate-alert
+    scope: appi-2i2oapij4zsrc
+
+No new resource group, no new Application Insights resource, no new Service
+Bus namespace, and no new/duplicate Container App were created - the
+existing suitable resources were reused per STEP 3/STEP 4's guidance to
+avoid unnecessary duplicate resources.
+
+Application build/run:
+
+  Source: day-26/src/QuotesApi (a copy of day-1/QuotesApi with Day 26
+  observability changes - day-1 itself was not modified)
+
+  dotnet build
+    -> Build succeeded. 0 Warning(s). 0 Error(s).
+
+  Run (local process, pointed at the real Azure resources above):
+    ASPNETCORE_ENVIRONMENT=Development
+    ASPNETCORE_URLS=http://localhost:5310
+    APPLICATIONINSIGHTS_CONNECTION_STRING=<real connection string for
+      appi-2i2oapij4zsrc, resolved via az cli at run time, never written to
+      a file - see otel-config.txt for the resolution-order bug this
+      exposed and the fix applied>
+    ServiceBus:FullyQualifiedNamespace=sb-quotesapi-thinkschool.servicebus.windows.net
+      (from appsettings.json - already the real, existing namespace)
+    Jwt:Key=<random 48-byte local dev-only signing key, dotnet user-secrets,
+      never committed>
+
+  Credential: DefaultAzureCredential (ExcludeManagedIdentityCredential=true
+    in Development, per MessagingExtensions.BuildCredential, unchanged from
+    day-1) - resolves via the already-authenticated `az login` session
+    (AzureCliCredential), which holds Owner on the subscription and
+    therefore has Service Bus data-plane access with no extra role
+    assignment required. Verified: az role assignment list --assignee
+    ayush.sinha7@s.amity.edu --scope /subscriptions/<id> -> Owner.
+
+  Database: SQLite (day-26/src/QuotesApi/quotes.db), migrated automatically
+  on startup exactly as in day-1 (db.Database.Migrate()).
+
+Traffic generated (real HTTP calls against the running local instance):
+  - 40 quote creates (POST /api/quotes)
+  - 85 quote reads (GET /api/quotes, GET /api/quotes/{id}), including 12
+    intentional 404s
+  - 6 intentional failed logins (401) plus one real account lockout (423)
+  - 11 intentional malformed JSON bodies -> genuine unhandled-exception 500s
+    (GlobalExceptionHandler), used to validate error-rate telemetry
+  - 24 Service Bus publishes (20 normal + 4 poison), each fanned out to both
+    sub-day26-audit and sub-day26-notifications and consumed by the
+    corresponding in-process worker
+
+Result: 254 request telemetry rows and 706 dependency telemetry rows ingested
+into appi-2i2oapij4zsrc under cloud_RoleName=quotes-api-day26 at verification
+time (az monitor app-insights query - see app-insights.txt / telemetry
+counts also embedded in evidence/screenshots/01-opentelemetry-app-insights.png).

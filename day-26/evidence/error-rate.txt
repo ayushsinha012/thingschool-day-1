@@ -1,0 +1,39 @@
+{
+  "tables": [
+    {
+      "columns": [
+        {
+          "name": "timestamp",
+          "type": "datetime"
+        },
+        {
+          "name": "Total",
+          "type": "long"
+        },
+        {
+          "name": "Failed",
+          "type": "long"
+        },
+        {
+          "name": "ErrorRatePercent",
+          "type": "real"
+        }
+      ],
+      "name": "PrimaryResult",
+      "rows": [
+        [
+          "2026-09-10T05:55:00Z",
+          156,
+          14,
+          8.97
+        ],
+        [
+          "2026-09-10T06:00:00Z",
+          97,
+          34,
+          35.05
+        ]
+      ]
+    }
+  ]
+}
