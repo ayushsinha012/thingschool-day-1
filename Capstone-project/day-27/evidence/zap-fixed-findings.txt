@@ -1,0 +1,53 @@
+=== Finding classification ===
+
+1. Non-Storable Content [10049] (first baseline run, Informational) -
+   ACCEPTED BY DESIGN, not a defect
+   Flagged on the two 404 responses ZAP's default spider found
+   (/robots.txt, /sitemap.xml - neither is a real MaintainXpert route).
+   The finding notes these responses are not cacheable. That is the
+   deliberate, global effect of Program.cs setting
+   Cache-Control: no-store, no-cache on every response - correct behavior
+   for an API that can return authenticated, per-caller data, not a
+   defect to fix.
+
+2. Re-examine Cache-control Directives [10015 / 10049-adjacent]
+   (second, OpenAPI-seeded run, Informational, Low confidence) -
+   ACCEPTED BY DESIGN, not a defect
+   Flagged on GET /openapi/v1.json - an advisory prompt to manually
+   confirm Cache-Control is correct, not a report that it is wrong. It
+   already carries the same global no-store, no-cache header as every
+   other response.
+
+Both proactively-set security headers (Strict-Transport-Security,
+X-Content-Type-Options, Cache-Control/Pragma) were added to Program.cs
+before the first scan ran, based on concrete findings from an earlier
+ZAP pass against a different API in this same session - so this baseline
+started clean on those checks rather than needing a fix-and-rerun cycle
+for them. The two informational notes above are the only alerts either
+scan produced; neither represents an actual vulnerability.
+
+=== Coverage ===
+The default baseline spider found only 3 URLs (root, /robots.txt,
+/sitemap.xml) - MaintainXpert is a pure JSON API with no HTML links to
+crawl. A ZAP automation-framework plan seeded from the live OpenAPI
+document (GET /openapi/v1.json) plus a short spider pass raised real
+coverage to 16 URLs across /api/v1/assets, /api/v1/work-orders (including
+the assign/start/complete lifecycle endpoints), and /auth/token. The
+OpenAPI import logged 7 non-fatal parser warnings ("Declared path
+parameter version needs to be defined as a path parameter in path or
+operation level") - the same known, cosmetic gap identified during an
+earlier hardening pass this session: the {version:apiVersion} route
+constraint segment is not emitted as an explicit path-level `parameters`
+entry by Microsoft.AspNetCore.OpenApi's default processing. It did not
+block the scan (ZAP substituted a default value and still added all 9
+declared operations as URLs) and does not affect runtime behavior -
+documented here rather than fixed, to keep this pass focused on the
+actual security findings.
+
+=== Result ===
+First run (3 URLs, default spider): 66 PASS, 1 WARN (informational,
+accepted by design above).
+Second run (16 URLs, OpenAPI-seeded): 1 informational finding
+(accepted by design above), zero Low/Medium/High findings.
+See evidence/zap-report.html (first run) and
+evidence/zap-report-final.html (OpenAPI-seeded run) for the full reports.

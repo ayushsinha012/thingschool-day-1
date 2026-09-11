@@ -1,0 +1,28 @@
+=== Private endpoint network-layer connectivity test ===
+Purpose: prove the SQL private endpoint actually works at the network
+layer (DNS resolution + TCP reachability), independent of the compute
+tier limitation documented in evidence/deployment.txt (this
+subscription's MaintainXpert Container App cannot itself join the VNet -
+see that file for why).
+
+Method: a temporary Azure Container Instance (mcr.microsoft.com/azure-cli)
+was deployed into a delegated subnet (snet-nettest, 10.70.3.0/24) inside
+the same VNet as the SQL private endpoint, ran a DNS lookup and a raw TCP
+connect against the SQL server's hostname/private IP, then was deleted.
+
+--- getent hosts sql-maintainxpert-day27-dev.database.windows.net ---
+10.70.2.4       sql-maintainxpert-day27-dev.privatelink.database.windows.net sql-maintainxpert-day27-dev.database.windows.net
+
+--- tcp connect test to 10.70.2.4:1433 ---
+TCP_OPEN
+
+=== Result ===
+From inside the VNet, the SQL server's public FQDN resolves through the
+private DNS zone to its private endpoint IP (10.70.2.4), and TCP 1433 is
+reachable at that private IP. The private endpoint is genuinely
+functional - the constraint documented in deployment.txt is purely that
+this subscription's Container Apps compute cannot join this VNet, not
+that the private networking itself doesn't work.
+
+Test resources (nettest-mx-day27b container instance, snet-nettest
+subnet) were deleted after this test.

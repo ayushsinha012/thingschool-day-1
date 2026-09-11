@@ -8,13 +8,38 @@ using MaintainXpert.Maintenance.Infrastructure;
 using MaintainXpert.Notifications.Application;
 using MaintainXpert.Notifications.Infrastructure;
 using MaintainXpert.SharedKernel;
+using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = ApiHardeningExtensions.MaxRequestBodyBytes;
+});
+
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
+
 builder.Services.AddSingleton(TimeProvider.System);
 
-builder.Services.AddSingleton<IWorkOrderRepository, InMemoryWorkOrderRepository>();
-builder.Services.AddSingleton<IAssetRepository, InMemoryAssetRepository>();
+var azureSqlConnectionString = builder.Configuration.GetConnectionString("AzureSql");
+var useSqlServer = !string.IsNullOrWhiteSpace(azureSqlConnectionString);
+
+if (useSqlServer)
+{
+    builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(azureSqlConnectionString));
+    builder.Services.AddScoped<IWorkOrderRepository, SqlWorkOrderRepository>();
+    builder.Services.AddScoped<IAssetRepository, SqlAssetRepository>();
+}
+else
+{
+    builder.Services.AddSingleton<IWorkOrderRepository, InMemoryWorkOrderRepository>();
+    builder.Services.AddSingleton<IAssetRepository, InMemoryAssetRepository>();
+}
+
 builder.Services.AddSingleton<INotificationSink, ConsoleNotificationSink>();
 
 builder.Services.AddScoped<IDomainEventDispatcher, InProcessDomainEventDispatcher>();
@@ -23,9 +48,60 @@ builder.Services.AddScoped<WorkOrderService>();
 builder.Services.AddScoped<IDomainEventHandler<WorkOrderCreated>, WorkOrderCreatedNotificationHandler>();
 builder.Services.AddScoped<IDomainEventHandler<WorkOrderCompleted>, WorkOrderCompletedHandler>();
 
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
+builder.Services.AddApiJwtAuthentication(builder.Configuration);
+builder.Services.AddApiHardening();
+
+builder.Services.AddHealthChecks();
+
 var app = builder.Build();
 
-app.MapGroup("/assets").MapAssetEndpoints();
-app.MapGroup("/work-orders").MapWorkOrderEndpoints();
+app.UseExceptionHandler();
+
+var isDevelopment = app.Environment.IsDevelopment();
+
+app.Use(async (context, next) =>
+{
+    context.Response.OnStarting(() =>
+    {
+        context.Response.Headers.CacheControl = "no-store, no-cache";
+        context.Response.Headers.Pragma = "no-cache";
+        context.Response.Headers.XContentTypeOptions = "nosniff";
+
+        if (!isDevelopment)
+        {
+            context.Response.Headers.StrictTransportSecurity = "max-age=31536000; includeSubDomains";
+        }
+
+        return Task.CompletedTask;
+    });
+
+    await next();
+});
+
+if (useSqlServer)
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.EnsureCreatedAsync();
+}
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapHealthChecks("/health");
+
+app.MapOpenApi();
+
+app.MapGroup("/auth").MapAuthEndpoints();
+
+app.MapAssetEndpoints();
+app.MapWorkOrderEndpoints();
 
 app.Run();
+
+public partial class Program
+{
+}

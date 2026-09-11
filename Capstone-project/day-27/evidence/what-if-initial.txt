@@ -1,0 +1,258 @@
+WARNING: A new Bicep release is available: v0.47.16. Upgrade now by running "az bicep upgrade".
+WARNING: C:\Users\DELL\Desktop\thingschool\day-27\infra\modules\keyvault.bicep(25,7) : Warning secure-secrets-in-params: Parameter 'integrationClientSecretHashName' may represent a secret (according to its name) and must be declared with the '@secure()' attribute. [https://aka.ms/bicep/linter-diagnostics#secure-secrets-in-params]
+
+Note: The result may contain false positive predictions (noise).
+You can help us improve the accuracy of the result by opening an issue here: https://aka.ms/WhatIfIssues
+NOTICE! - Want to get What-if without noise? Move to Deployment Stacks What-If https://aka.ms/stackswhatifGA
+
+Resource and property changes are indicated with these symbols:
+  + Create
+  x Unsupported
+
+The deployment will update the following scopes:
+
+Scope: /
+
+
+
+
+Scope: /subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev
+
+  + Microsoft.App/containerApps/maintainxpert-api-day27-dev [2024-03-01]
+
+      apiVersion:                                     "2024-03-01"
+      id:                                             "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.App/containerApps/maintainxpert-api-day27-dev"
+      identity.type:                                  "SystemAssigned"
+      location:                                       "centralindia"
+      name:                                           "maintainxpert-api-day27-dev"
+      properties.configuration.activeRevisionsMode:   "Single"
+      properties.configuration.ingress.allowInsecure: false
+      properties.configuration.ingress.external:      true
+      properties.configuration.ingress.targetPort:    8080
+      properties.configuration.ingress.transport:     "auto"
+      properties.configuration.registries: [
+        0:
+
+          identity: "system"
+          server:   "[reference('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ContainerRegistry/registries/cr2i2oapij4zsrc', '2023-07-01').loginServer]"
+
+      ]
+      properties.configuration.secrets: [
+        0:
+
+          identity:    "system"
+          keyVaultUrl: "[format('{0}secrets/{1}', reference('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.KeyVault/vaults/kv-maintainxpert-d27-dev', '2023-07-01').vaultUri, 'jwt-signing-key')]"
+          name:        "*******"
+
+        1:
+
+          identity:    "system"
+          keyVaultUrl: "[format('{0}secrets/{1}', reference('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.KeyVault/vaults/kv-maintainxpert-d27-dev', '2023-07-01').vaultUri, 'integration-client-secret-hash')]"
+          name:        "*******"
+
+      ]
+      properties.managedEnvironmentId:                "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.App/managedEnvironments/thinkschool-env"
+      properties.template.containers: [
+        0:
+
+          env: [
+            0:
+
+              name:  "PORT"
+              value: "8080"
+
+            1:
+
+              name:      "Jwt__Key"
+              secretRef: "*******"
+
+            2:
+
+              name:  "IntegrationClient__ClientId"
+              value: "maintainxpert-integration"
+
+            3:
+
+              name:      "IntegrationClient__ClientSecretHash"
+              secretRef: "*******"
+
+            4:
+
+              name:  "ConnectionStrings__AzureSql"
+              value: "[format('Server=tcp:{0},1433;Database={1};Authentication=Active Directory Default;Encrypt=True;TrustServerCertificate=False;', reference('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.Sql/servers/sql-maintainxpert-day27-dev', '2023-08-01-preview').fullyQualifiedDomainName, 'maintainxpert')]"
+
+          ]
+          image:            "cr2i2oapij4zsrc.azurecr.io/maintainxpert/maintainxpert-api-day27-dev:latest"
+          name:             "main"
+          resources.cpu:    0.25
+          resources.memory: "0.5Gi"
+
+      ]
+      properties.template.scale.maxReplicas:          1
+      properties.template.scale.minReplicas:          0
+      properties.workloadProfileName:                 "Consumption"
+      tags.day:                                       "27"
+      tags.environment:                               "dev"
+      tags.project:                                   "maintainxpert"
+      type:                                           "Microsoft.App/containerApps"
+
+  + Microsoft.KeyVault/vaults/kv-maintainxpert-d27-dev [2023-07-01]
+
+      apiVersion:                           "2023-07-01"
+      id:                                   "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.KeyVault/vaults/kv-maintainxpert-d27-dev"
+      location:                             "centralindia"
+      name:                                 "kv-maintainxpert-d27-dev"
+      properties.enableRbacAuthorization:   true
+      properties.enableSoftDelete:          true
+      properties.publicNetworkAccess:       "Enabled"
+      properties.sku.family:                "A"
+      properties.sku.name:                  "standard"
+      properties.softDeleteRetentionInDays: 7
+      properties.tenantId:                  "8d46a076-d093-416d-a57b-8692cde13bf8"
+      tags.day:                             "27"
+      tags.environment:                     "dev"
+      tags.project:                         "maintainxpert"
+      type:                                 "Microsoft.KeyVault/vaults"
+
+  + Microsoft.KeyVault/vaults/kv-maintainxpert-d27-dev/secrets/integration-client-secret-hash [2023-07-01]
+
+      apiVersion:       "2023-07-01"
+      id:               "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.KeyVault/vaults/kv-maintainxpert-d27-dev/secrets/integration-client-secret-hash"
+      name:             "integration-client-secret-hash"
+      properties.value: "*******"
+      type:             "Microsoft.KeyVault/vaults/secrets"
+
+  + Microsoft.KeyVault/vaults/kv-maintainxpert-d27-dev/secrets/jwt-signing-key [2023-07-01]
+
+      apiVersion:       "2023-07-01"
+      id:               "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.KeyVault/vaults/kv-maintainxpert-d27-dev/secrets/jwt-signing-key"
+      name:             "jwt-signing-key"
+      properties.value: "*******"
+      type:             "Microsoft.KeyVault/vaults/secrets"
+
+  + Microsoft.Network/privateDnsZones/privatelink.database.windows.net [2020-06-01]
+
+      apiVersion:       "2020-06-01"
+      id:               "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.Network/privateDnsZones/privatelink.database.windows.net"
+      location:         "global"
+      name:             "privatelink.database.windows.net"
+      tags.day:         "27"
+      tags.environment: "dev"
+      tags.project:     "maintainxpert"
+      type:             "Microsoft.Network/privateDnsZones"
+
+  + Microsoft.Network/privateDnsZones/privatelink.database.windows.net/virtualNetworkLinks/vnet-maintainxpert-day27-dev-link [2020-06-01]
+
+      apiVersion:                     "2020-06-01"
+      id:                             "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.Network/privateDnsZones/privatelink.database.windows.net/virtualNetworkLinks/vnet-maintainxpert-day27-dev-link"
+      location:                       "global"
+      name:                           "vnet-maintainxpert-day27-dev-link"
+      properties.registrationEnabled: false
+      properties.virtualNetwork.id:   "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.Network/virtualNetworks/vnet-maintainxpert-day27-dev"
+      type:                           "Microsoft.Network/privateDnsZones/virtualNetworkLinks"
+
+  + Microsoft.Network/privateEndpoints/pe-sql-sql-maintainxpert-day27-dev [2023-11-01]
+
+      apiVersion:           "2023-11-01"
+      id:                   "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.Network/privateEndpoints/pe-sql-sql-maintainxpert-day27-dev"
+      location:             "centralindia"
+      name:                 "pe-sql-sql-maintainxpert-day27-dev"
+      properties.privateLinkServiceConnections: [
+        0:
+
+          name:                            "pe-sql-sql-maintainxpert-day27-dev"
+          properties.groupIds: [
+            0: "sqlServer"
+          ]
+          properties.privateLinkServiceId: "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.Sql/servers/sql-maintainxpert-day27-dev"
+
+      ]
+      properties.subnet.id: "[reference('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.Network/virtualNetworks/vnet-maintainxpert-day27-dev', '2023-11-01').subnets[0].id]"
+      tags.day:             "27"
+      tags.environment:     "dev"
+      tags.project:         "maintainxpert"
+      type:                 "Microsoft.Network/privateEndpoints"
+
+  + Microsoft.Network/privateEndpoints/pe-sql-sql-maintainxpert-day27-dev/privateDnsZoneGroups/default [2023-11-01]
+
+      apiVersion:  "2023-11-01"
+      id:          "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.Network/privateEndpoints/pe-sql-sql-maintainxpert-day27-dev/privateDnsZoneGroups/default"
+      name:        "default"
+      properties.privateDnsZoneConfigs: [
+        0:
+
+          name:                        "privatelink.database.windows.net"
+          properties.privateDnsZoneId: "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.Network/privateDnsZones/privatelink.database.windows.net"
+
+      ]
+      type:        "Microsoft.Network/privateEndpoints/privateDnsZoneGroups"
+
+  + Microsoft.Network/virtualNetworks/vnet-maintainxpert-day27-dev [2023-11-01]
+
+      apiVersion:               "2023-11-01"
+      id:                       "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.Network/virtualNetworks/vnet-maintainxpert-day27-dev"
+      location:                 "centralindia"
+      name:                     "vnet-maintainxpert-day27-dev"
+      properties.addressSpace.addressPrefixes: [
+        0: "10.70.0.0/16"
+      ]
+      properties.subnets: [
+        0:
+
+          name:                                      "snet-pe"
+          properties.addressPrefix:                  "10.70.2.0/24"
+          properties.privateEndpointNetworkPolicies: "Disabled"
+
+      ]
+      tags.day:                 "27"
+      tags.environment:         "dev"
+      tags.project:             "maintainxpert"
+      type:                     "Microsoft.Network/virtualNetworks"
+
+  + Microsoft.Sql/servers/sql-maintainxpert-day27-dev [2023-08-01-preview]
+
+      apiVersion:                                          "2023-08-01-preview"
+      id:                                                  "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.Sql/servers/sql-maintainxpert-day27-dev"
+      location:                                            "centralindia"
+      name:                                                "sql-maintainxpert-day27-dev"
+      properties.administrators.administratorType:         "ActiveDirectory"
+      properties.administrators.azureADOnlyAuthentication: true
+      properties.administrators.login:                     "*******"
+      properties.administrators.principalType:             "User"
+      properties.administrators.sid:                       "4eece2d1-e3b7-4754-a99a-afc480a96fc8"
+      properties.administrators.tenantId:                  "8d46a076-d093-416d-a57b-8692cde13bf8"
+      properties.minimalTlsVersion:                        "1.2"
+      properties.publicNetworkAccess:                      "Enabled"
+      tags.day:                                            "27"
+      tags.environment:                                    "dev"
+      tags.project:                                        "maintainxpert"
+      type:                                                "Microsoft.Sql/servers"
+
+  + Microsoft.Sql/servers/sql-maintainxpert-day27-dev/databases/maintainxpert [2023-08-01-preview]
+
+      apiVersion:              "2023-08-01-preview"
+      id:                      "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.Sql/servers/sql-maintainxpert-day27-dev/databases/maintainxpert"
+      location:                "centralindia"
+      name:                    "maintainxpert"
+      properties.maxSizeBytes: 2147483648
+      sku.name:                "Basic"
+      tags.day:                "27"
+      tags.environment:        "dev"
+      tags.project:            "maintainxpert"
+      type:                    "Microsoft.Sql/servers/databases"
+
+  + Microsoft.Sql/servers/sql-maintainxpert-day27-dev/firewallRules/AllowAzureServices [2023-08-01-preview]
+
+      apiVersion:                "2023-08-01-preview"
+      id:                        "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.Sql/servers/sql-maintainxpert-day27-dev/firewallRules/AllowAzureServices"
+      name:                      "AllowAzureServices"
+      properties.endIpAddress:   "0.0.0.0"
+      properties.startIpAddress: "0.0.0.0"
+      type:                      "Microsoft.Sql/servers/firewallRules"
+
+Resource changes: 12 to create, 2 unsupported.
+
+Diagnostics (2): 
+[extensionResourceId('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.KeyVault/vaults/kv-maintainxpert-d27-dev', 'Microsoft.Authorization/roleAssignments', guid('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.KeyVault/vaults/kv-maintainxpert-d27-dev', reference('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.App/containerApps/maintainxpert-api-day27-dev', '2024-03-01', 'full').identity.principalId, 'KeyVaultSecretsUser'))] (Unsupported) Changes to the resource declared at 'properties.template.resources[5].properties.template.resources[0]' on line 1 and column 27051 cannot be analyzed because its resource ID or API version cannot be calculated until the deployment is under way. Please see https://aka.ms/WhatIfUnidentifiableResource for more guidance.
+[extensionResourceId('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ContainerRegistry/registries/cr2i2oapij4zsrc', 'Microsoft.Authorization/roleAssignments', guid('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/thinkschool-rg/providers/Microsoft.ContainerRegistry/registries/cr2i2oapij4zsrc', reference('/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.App/containerApps/maintainxpert-api-day27-dev', '2024-03-01', 'full').identity.principalId, 'AcrPull'))] (Unsupported) Changes to the resource declared at 'properties.template.resources[6].properties.template.resources[0]' on line 1 and column 28787 cannot be analyzed because its resource ID or API version cannot be calculated until the deployment is under way. Please see https://aka.ms/WhatIfUnidentifiableResource for more guidance.
+

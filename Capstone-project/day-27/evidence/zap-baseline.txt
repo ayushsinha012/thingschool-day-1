@@ -1,0 +1,37 @@
+=== ZAP baseline scan (first run, against the deployed Day 27 MaintainXpert API) ===
+Command: docker run --rm -v <workdir>:/zap/wrk:rw ghcr.io/zaproxy/zaproxy:stable
+         zap-baseline.py -t https://maintainxpert-api-day27-dev.politeocean-3efec37e.centralindia.azurecontainerapps.io
+         -r zap-baseline-report.html -w zap-baseline-report.md -J zap-baseline-report.json
+Target: https://maintainxpert-api-day27-dev.politeocean-3efec37e.centralindia.azurecontainerapps.io
+Scan type: baseline (passive only, ZAP's own automation framework, no active attack rules)
+
+Total of 3 URLs (ZAP's default spider found only the root, /robots.txt,
+/sitemap.xml - this is a pure JSON API with no HTML links to follow;
+addressed afterwards by seeding the scan from the OpenAPI document, see
+zap-fixed-findings.txt)
+
+66 PASS, including:
+  PASS: Strict-Transport-Security Header [10035]
+  PASS: X-Content-Type-Options Header Missing [10021]
+  PASS: Content-Type Header Missing [10019]
+  PASS: Application Error Disclosure [90022]
+  (all hardened proactively in Program.cs before this first scan ran,
+  based on lessons from an earlier hardening pass on a different project
+  in this same session)
+
+1 WARN-NEW:
+  Non-Storable Content [10049] x 2
+    https://maintainxpert-api-day27-dev.../robots.txt (404 Not Found)
+    https://maintainxpert-api-day27-dev.../sitemap.xml (404 Not Found)
+  Informational risk. This flags that the (404, nonexistent) responses
+  are not cacheable - which is the deliberate result of the API's own
+  Cache-Control: no-store, no-cache header, set globally so that no
+  authenticated or sensitive API response is ever cached. Accepted by
+  design, not a defect - see zap-fixed-findings.txt for the full
+  classification.
+
+FAIL-NEW: 0	FAIL-INPROG: 0	WARN-NEW: 1	WARN-INPROG: 0	INFO: 0	IGNORE: 0	PASS: 66
+
+Automation plan warnings:
+	Job spider error accessing URL <target> status code returned : 404 expected 200
+	(expected - the API has no root/index route; every real route is under /api, /auth, or /health)

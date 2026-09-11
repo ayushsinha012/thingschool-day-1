@@ -1,0 +1,63 @@
+=== Private DNS zone ===
+{
+  "etag": "cd96d08d-8360-4c08-ab9a-7cb4160955d6",
+  "id": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.Network/privateDnsZones/privatelink.database.windows.net",
+  "location": "global",
+  "maxNumberOfRecordSets": 25000,
+  "maxNumberOfVirtualNetworkLinks": 1000,
+  "maxNumberOfVirtualNetworkLinksWithRegistration": 100,
+  "name": "privatelink.database.windows.net",
+  "numberOfRecordSets": 2,
+  "numberOfVirtualNetworkLinks": 1,
+  "numberOfVirtualNetworkLinksWithRegistration": 0,
+  "provisioningState": "Succeeded",
+  "resourceGroup": "maintainxpert-day27-dev",
+  "tags": {
+    "day": "27",
+    "environment": "dev",
+    "project": "maintainxpert"
+  },
+  "type": "Microsoft.Network/privateDnsZones"
+}
+
+=== Private DNS A record ===
+[
+  {
+    "aRecords": [
+      {
+        "ipv4Address": "10.70.2.4"
+      }
+    ],
+    "etag": "238d9273-00b7-4f9a-8092-152025cf0022",
+    "fqdn": "sql-maintainxpert-day27-dev.privatelink.database.windows.net.",
+    "id": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.Network/privateDnsZones/privatelink.database.windows.net/A/sql-maintainxpert-day27-dev",
+    "isAutoRegistered": false,
+    "metadata": {
+      "creator": "created by private endpoint pe-sql-sql-maintainxpert-day27-dev with resource guid a1c1b3ea-973e-4a8a-b394-e5d33d783faf"
+    },
+    "name": "sql-maintainxpert-day27-dev",
+    "resourceGroup": "maintainxpert-day27-dev",
+    "ttl": 10,
+    "type": "Microsoft.Network/privateDnsZones/A"
+  }
+]
+
+=== VNet link ===
+[
+  {
+    "etag": "\"4400d2c4-0000-0100-0000-6aa3c6a10000\"",
+    "id": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.Network/privateDnsZones/privatelink.database.windows.net/virtualNetworkLinks/vnet-maintainxpert-day27-dev-link",
+    "location": "global",
+    "name": "vnet-maintainxpert-day27-dev-link",
+    "provisioningState": "Succeeded",
+    "registrationEnabled": false,
+    "resolutionPolicy": "Default",
+    "resourceGroup": "maintainxpert-day27-dev",
+    "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+    "virtualNetwork": {
+      "id": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.Network/virtualNetworks/vnet-maintainxpert-day27-dev",
+      "resourceGroup": "maintainxpert-day27-dev"
+    },
+    "virtualNetworkLinkState": "Completed"
+  }
+]

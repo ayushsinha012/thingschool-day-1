@@ -1,0 +1,61 @@
+=== Private endpoint: pe-sql-sql-maintainxpert-day27-dev ===
+{
+  "customDnsConfigs": [],
+  "customNetworkInterfaceName": "",
+  "etag": "W/\"a744aa72-7cad-422e-8024-fc13ae8f696a\"",
+  "id": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.Network/privateEndpoints/pe-sql-sql-maintainxpert-day27-dev",
+  "ipConfigurations": [],
+  "ipVersionType": "IPv4",
+  "location": "centralindia",
+  "manualPrivateLinkServiceConnections": [],
+  "name": "pe-sql-sql-maintainxpert-day27-dev",
+  "networkInterfaces": [
+    {
+      "id": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.Network/networkInterfaces/pe-sql-sql-maintainxpert-day27-dev.nic.532684ba-72d1-4f67-b611-581e8d91d78f",
+      "resourceGroup": "maintainxpert-day27-dev"
+    }
+  ],
+  "privateLinkServiceConnections": [
+    {
+      "etag": "W/\"a744aa72-7cad-422e-8024-fc13ae8f696a\"",
+      "groupIds": [
+        "sqlServer"
+      ],
+      "id": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.Network/privateEndpoints/pe-sql-sql-maintainxpert-day27-dev/privateLinkServiceConnections/pe-sql-sql-maintainxpert-day27-dev",
+      "name": "pe-sql-sql-maintainxpert-day27-dev",
+      "privateLinkServiceConnectionState": {
+        "actionsRequired": "None",
+        "description": "Auto-approved",
+        "status": "Approved"
+      },
+      "privateLinkServiceId": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.Sql/servers/sql-maintainxpert-day27-dev",
+      "provisioningState": "Succeeded",
+      "resourceGroup": "maintainxpert-day27-dev",
+      "type": "Microsoft.Network/privateEndpoints/privateLinkServiceConnections"
+    }
+  ],
+  "provisioningState": "Succeeded",
+  "resourceGroup": "maintainxpert-day27-dev",
+  "subnet": {
+    "id": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.Network/virtualNetworks/vnet-maintainxpert-day27-dev/subnets/snet-pe",
+    "resourceGroup": "maintainxpert-day27-dev"
+  },
+  "tags": {
+    "day": "27",
+    "environment": "dev",
+    "project": "maintainxpert"
+  },
+  "type": "Microsoft.Network/privateEndpoints"
+}
+
+=== Private endpoint NIC (private IP) ===
+{
+  "name": "pe-sql-sql-maintainxpert-day27-dev.nic.532684ba-72d1-4f67-b611-581e8d91d78f",
+  "privateIp": "10.70.2.4",
+  "subnet": "/subscriptions/708f56eb-d40f-4658-adde-d6f5866dad34/resourceGroups/maintainxpert-day27-dev/providers/Microsoft.Network/virtualNetworks/vnet-maintainxpert-day27-dev/subnets/snet-pe"
+}
+
+=== Re-verification after moving day-27 into Capstone-project ===
+status:            Approved
+provisioningState: Succeeded
+target:            .../Microsoft.Sql/servers/sql-maintainxpert-day27-dev

@@ -1,0 +1,35 @@
+=== Valid request within limits (authenticated) ===
+{"id":"dac62139-8f6a-4c21-bab6-f6105697d2ef","name":"Input Limit Test","status":"Operational","lastMaintenanceCompletedAt":null}
+HTTP status: 201
+
+=== Oversized authenticated body: 20000-char name field, 16 KiB Kestrel MaxRequestBodySize ===
+
+HTTP status: 413
+
+=== Field over StringLength(200) but under the body-size ceiling: 250-char name field ===
+{"type":"https://tools.ietf.org/html/rfc9110#section-15.5.1","title":"One or more validation errors occurred.","status":400,"errors":{"Name":["The field Name must be a string with a minimum length of 1 and a maximum length of 200."]},"traceId":"00-5c4e765dcdd8c3b1ca13790c10f453c4-6eae7f8cdb06994f-00"}
+HTTP status: 400
+
+=== Empty required field ===
+{"type":"https://tools.ietf.org/html/rfc9110#section-15.5.1","title":"One or more validation errors occurred.","status":400,"errors":{"Name":["The Name field is required.","The field Name must be a string with a minimum length of 1 and a maximum length of 200."]},"traceId":"00-7097af2d7a35cd5e5f78c9841a8c6711-d855b224e707febd-00"}
+HTTP status: 400
+
+=== Malformed JSON (invalid enum value for Priority) ===
+
+HTTP status: 400
+
+=== Non-guid identifier in route ===
+status: 404
+
+=== Invalid work order state transition (start before assign) ===
+create: 201
+{"title":"Invalid work order transition","status":409,"detail":"Cannot start a work order from status 'Open'. A technician must be assigned first.","instance":"0HNOFT5MEHKUB:00000001"}
+HTTP status: 409
+
+
+=== Re-verification after moving day-27 into Capstone-project ===
+POST /api/v1/assets, 20 KB body (16 KiB limit)        -> 413
+POST /api/v1/assets, empty required Name               -> 400
+POST /api/v1/work-orders, invalid Priority enum value   -> 400
+POST /api/v1/work-orders/{id}/start (before assignment) -> 409
+All against the live deployment with a real, freshly issued token.

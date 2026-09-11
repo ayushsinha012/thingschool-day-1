@@ -1,0 +1,60 @@
+=== Resource group ===
+Location      Name
+------------  -----------------------
+centralindia  maintainxpert-day27-dev
+
+=== All resources ===
+Name                                                                         ResourceGroup            Location      Type                                                   Status
+---------------------------------------------------------------------------  -----------------------  ------------  -----------------------------------------------------  ---------
+vnet-maintainxpert-day27-dev                                                 maintainxpert-day27-dev  centralindia  Microsoft.Network/virtualNetworks                      Succeeded
+kv-maintainxpert-d27-dev                                                     maintainxpert-day27-dev  centralindia  Microsoft.KeyVault/vaults                              Succeeded
+sql-maintainxpert-day27-dev                                                  maintainxpert-day27-dev  centralindia  Microsoft.Sql/servers                                  Succeeded
+sql-maintainxpert-day27-dev/master                                           maintainxpert-day27-dev  centralindia  Microsoft.Sql/servers/databases                        Succeeded
+sql-maintainxpert-day27-dev/maintainxpert                                    maintainxpert-day27-dev  centralindia  Microsoft.Sql/servers/databases                        Succeeded
+privatelink.database.windows.net                                             maintainxpert-day27-dev  global        Microsoft.Network/privateDnsZones                      Succeeded
+pe-sql-sql-maintainxpert-day27-dev                                           maintainxpert-day27-dev  centralindia  Microsoft.Network/privateEndpoints                     Succeeded
+maintainxpert-api-day27-dev                                                  maintainxpert-day27-dev  centralindia  Microsoft.App/containerApps                            Succeeded
+pe-sql-sql-maintainxpert-day27-dev.nic.532684ba-72d1-4f67-b611-581e8d91d78f  maintainxpert-day27-dev  centralindia  Microsoft.Network/networkInterfaces                    Succeeded
+privatelink.database.windows.net/vnet-maintainxpert-day27-dev-link           maintainxpert-day27-dev  global        Microsoft.Network/privateDnsZones/virtualNetworkLinks  Succeeded
+
+=== Container app final state ===
+{
+  "fqdn": "maintainxpert-api-day27-dev.politeocean-3efec37e.centralindia.azurecontainerapps.io",
+  "name": "maintainxpert-api-day27-dev",
+  "provisioningState": "Succeeded",
+  "runningStatus": "Running"
+}
+
+=== Managed identity ===
+{
+  "principalId": "00d6d80b-fd5f-4ca4-b7bb-64a8326e51d1",
+  "tenantId": "8d46a076-d093-416d-a57b-8692cde13bf8",
+  "type": "SystemAssigned"
+}
+
+=== SQL server ===
+{
+  "name": "sql-maintainxpert-day27-dev",
+  "publicNetworkAccess": "Enabled",
+  "administrators": {
+    "administratorType": "ActiveDirectory",
+    "azureAdOnlyAuthentication": true,
+    "login": "ayush.sinha7@s.amity.edu",
+    "principalType": "User"
+  }
+}
+
+=== Private endpoint ===
+{
+  "name": "pe-sql-sql-maintainxpert-day27-dev",
+  "provisioningState": "Succeeded",
+  "status": "Approved"
+}
+
+=== Live endpoint checks ===
+GET /health -> 200
+GET /openapi/v1.json -> 200
+GET /api/v1/assets/00000000-0000-0000-0000-000000000000 -> 404
+POST /api/v1/assets (no auth) -> 401
+POST /api/v1/assets (valid token) -> 201
+GET /api/v2/assets/00000000-0000-0000-0000-000000000000 (unsupported version) -> 404

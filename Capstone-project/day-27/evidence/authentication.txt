@@ -1,0 +1,42 @@
+=== 1. Unauthenticated write request ===
+POST https://maintainxpert-api-day27-dev.politeocean-3efec37e.centralindia.azurecontainerapps.io/api/v1/assets  (no Authorization header)
+
+HTTP status: 401
+
+=== 2. Invalid/garbage bearer token ===
+
+HTTP status: 401
+
+=== 3. Wrong client credentials ===
+
+HTTP status: 401
+
+=== 4. Valid authenticated write (real production client credential) ===
+POST https://maintainxpert-api-day27-dev.politeocean-3efec37e.centralindia.azurecontainerapps.io/auth/token -> 200 (token issued)
+POST https://maintainxpert-api-day27-dev.politeocean-3efec37e.centralindia.azurecontainerapps.io/api/v1/assets  (Authorization: Bearer <valid JWT, not recorded>)
+{"id":"df4d7e07-903f-4871-b2e2-69b53c87c675","name":"HVAC Unit 4","status":"Operational","lastMaintenanceCompletedAt":null}
+HTTP status: 201
+
+
+=== Notes ===
+Bearer tokens and client secrets are never written to this file - only
+HTTP status codes and response bodies (which contain no credential
+material) are captured. The client credential used above is the real
+production integration client secret, generated for this deployment and
+never committed in plain text (only its SHA-256 hash is stored, as a Key
+Vault secret referenced by the Container App).
+
+=== Re-verification after moving day-27 into Capstone-project ===
+The integration client secret was rotated (Key Vault secret updated,
+container app given a fresh revision to pick it up) since the original
+production secret had already been discarded per this file's own
+no-secrets policy. Using the rotated credential:
+
+POST /auth/token (wrong client secret)  -> 401
+POST /auth/token (correct credentials)  -> 200
+POST /api/v1/assets (no token)          -> 401
+POST /api/v1/assets (garbage token)     -> 401
+POST /api/v1/assets (valid token)       -> 201
+
+The rotation secret was purged immediately after this verification and
+the temporary Key Vault role granted to run it was removed.

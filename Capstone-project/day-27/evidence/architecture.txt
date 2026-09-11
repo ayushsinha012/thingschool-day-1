@@ -1,0 +1,59 @@
+=== MaintainXpert architecture (as inspected for Day 27) ===
+
+Solution: MaintainXpert.slnx
+  src/MaintainXpert.Api            - host: minimal API endpoints, DI composition root
+  src/MaintainXpert.Maintenance    - core bounded context: WorkOrder aggregate, lifecycle
+  src/MaintainXpert.Assets         - AssetManagement bounded context: Asset aggregate
+  src/MaintainXpert.Notifications  - reacts to maintenance events (console sink)
+  src/MaintainXpert.SharedKernel   - IDomainEvent contracts, AssetId identity type
+  tests/MaintainXpert.Maintenance.Tests - WorkOrder aggregate invariant tests
+
+Before Day 27 (verified by reading the actual source, Day 22 kickoff state):
+  - No authentication of any kind - every endpoint was open
+  - No API versioning - routes were /assets, /work-orders
+  - No OpenAPI/Swagger document
+  - No request size limits, no field-length validation
+  - No database - IWorkOrderRepository/IAssetRepository were in-memory ConcurrentDictionary-backed
+  - No Azure resources of any kind for this project
+  - An invalid Priority enum value in a request crashed with an unhandled 500
+    leaking a raw System.Text.Json exception (found during this pass, fixed)
+
+Added for Day 27:
+  - Client-credentials JWT authentication (POST /auth/token), required on every write endpoint
+  - URL-segment API versioning (/api/v1/...)
+  - Microsoft.AspNetCore.OpenApi document at /openapi/v1.json, with a Bearer security scheme
+    and per-operation security requirements that track the real [Authorize] placement
+  - 16 KiB Kestrel MaxRequestBodySize, StringLength validation on Description/Name
+  - A GlobalExceptionHandler mapping BadHttpRequestException/business exceptions to clean
+    ProblemDetails responses instead of leaking framework internals
+  - A real Azure SQL data tier (EF Core, Active Directory Default authentication, no SQL
+    login/password anywhere) behind a private endpoint, with the in-memory repositories kept
+    as the local-dev/test fallback when no AzureSql connection string is configured
+
+=== Azure state actually used (verified via Azure CLI, this session) ===
+
+Subscription: 708f56eb-d40f-4658-adde-d6f5866dad34 (Azure for Students)
+Resource group (isolated, Day 27 only): maintainxpert-day27-dev, centralindia
+Shared resources reused, not modified:
+  - Container Apps environment: thinkschool-env (thinkschool-rg) - the only one this
+    subscription can have; see the quota error below
+  - Container registry: cr2i2oapij4zsrc (thinkschool-rg)
+
+=== Verified quota constraint (why the API is not itself VNet-integrated) ===
+A dedicated, VNet-integrated Container Apps environment was attempted for
+this exercise before settling on reusing the shared thinkschool-env. The
+actual Azure error returned was:
+
+  MaxNumberOfGlobalEnvironmentsInSubExceeded: The subscription
+  '708f56eb-d40f-4658-adde-d6f5866dad34' cannot have more than 1
+  Container App Environments.
+
+This is a hard, subscription-wide (not per-region) limit. thinkschool-env
+already exists and is the only Container Apps environment this
+subscription can have; it has no VNet integration and that cannot be
+added after creation. The MaintainXpert API therefore runs in
+thinkschool-env and reaches Azure SQL over the public endpoint - see
+evidence/deployment.txt for the SQL public-access configuration and
+reasoning. The private endpoint itself is independently verified from
+inside its VNet via a temporary network-test container, see
+evidence/private-endpoint-connectivity-test.txt.

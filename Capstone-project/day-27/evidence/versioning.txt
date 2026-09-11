@@ -1,0 +1,17 @@
+=== Supported version: GET /api/v1/assets/{id} ===
+{"id":"df4d7e07-903f-4871-b2e2-69b53c87c675","name":"HVAC Unit 4","status":"Operational","lastMaintenanceCompletedAt":null}
+HTTP status: 200
+
+=== Unsupported version: GET /api/v2/assets/{id} ===
+
+HTTP status: 404
+
+=== No version segment (should 404, no unversioned route exists): GET /assets/{id} ===
+
+HTTP status: 404
+
+
+=== Re-verification after moving day-27 into Capstone-project ===
+Against a freshly created asset (real resource, not a placeholder GUID):
+GET /api/v1/assets/{real-id}  -> 200
+GET /api/v2/assets/{real-id}  -> 404

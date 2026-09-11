@@ -1,0 +1,20 @@
+openapi version: 3.1.1
+info: {"title":"MaintainXpert","version":"v1"}
+securitySchemes: {"Bearer":{"type":"http","description":"Integration-client JWT issued by POST /auth/token.","scheme":"bearer","bearerFormat":"JWT"}}
+paths:
+  /auth/token
+  /api/v{version}/assets
+  /api/v{version}/assets/{id}
+  /api/v{version}/work-orders
+  /api/v{version}/work-orders/{id}
+  /api/v{version}/work-orders/{id}/assign
+  /api/v{version}/work-orders/{id}/start
+  /api/v{version}/work-orders/{id}/complete
+
+security on POST /api/v{version}/work-orders (protected): [{"Bearer":[]}]
+security on GET /api/v{version}/work-orders/{id} (public read): null
+security on POST /api/v{version}/assets (protected): [{"Bearer":[]}]
+security on GET /api/v{version}/assets/{id} (public read): null
+security on POST /auth/token (public, issues credentials): null
+--- raw doc size ---
+6528 bytes
